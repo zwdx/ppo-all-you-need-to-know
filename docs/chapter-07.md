@@ -2,7 +2,7 @@
 
 ---
 
-<a name="chapter-7"></a>
+<a id="chapter-7"></a>
 
 # 第 7 章 工程实现与实践
 
@@ -20,11 +20,11 @@
 
 前六章完成了 PPO 从数学基础到算法本体的全部理论推导。本章的目标是将这些公式逐行落地为可运行的 PyTorch 代码，并明确指出每一处实现与理论之间的差异、近似和数值稳定性处理。读者在阅读本章时，应随时对照前文公式，理解"代码为什么这样写"而非仅仅记住模板。
 
-<a name="s7-1"></a>
+<a id="s7-1"></a>
 
 ## 7.1 环境接口与 Gymnasium
 
-<a name="s7-1-1"></a>
+<a id="s7-1-1"></a>
 
 ### 7.1.1 Gymnasium API 概述
 
@@ -35,7 +35,7 @@ Gymnasium 是 OpenAI Gym 的官方继任者，提供了标准化的强化学习�
 
 其中 `terminated` 与 `truncated` 的语义区分是 PPO 正确实现的关键，也是旧版 Gym（仅返回单一 `done`）最常见的 bug 来源。
 
-<a name="s7-1-2"></a>
+<a id="s7-1-2"></a>
 
 ### 7.1.2 terminated 与 truncated 的语义区别
 
@@ -75,17 +75,17 @@ for t in reversed(range(num_steps)):
 
 关键区别：`nextnonterminal` 只依赖 `b_dones`（即 `terminated`），不包含 `truncated`。当 `truncated=True` 但 `terminated=False` 时，bootstrap 仍然生效。
 
-<a name="s7-2"></a>
+<a id="s7-2"></a>
 
 ## 7.2 向量环境（Vectorized Environments）
 
-<a name="s7-2-1"></a>
+<a id="s7-2-1"></a>
 
 ### 7.2.1 为什么 PPO 必须用向量环境
 
 第 6 章指出 PPO 每次更新需要 $`N \times T`$ 个样本（$`N`$ 个并行环境各采集 $`T`$ 步）。单环境采集效率极低，且批量过小会导致：(1) 优势估计方差过大；(2) mini-batch 更新不稳定。向量环境通过并行化解决这两个问题。
 
-<a name="s7-2-2"></a>
+<a id="s7-2-2"></a>
 
 ### 7.2.2 SyncVectorEnv 与 AsyncVectorEnv
 
@@ -94,7 +94,7 @@ Gymnasium 提供两种向量环境封装：
 - **`SyncVectorEnv`**：在同一进程中顺序执行 $`N`$ 个环境。优点是共享内存、无序列化开销；缺点是总耗时为 $`N`$ 倍单环境耗时。适合轻量级环境（如 CartPole）。
 - **`AsyncVectorEnv`**：每个环境运行在独立子进程中，通过管道通信。真正的并行加速，适合计算密集型环境。代价是进程间数据序列化开销和更复杂的调试体验。
 
-<a name="s7-2-3"></a>
+<a id="s7-2-3"></a>
 
 ### 7.2.3 Rollout Buffer 的形状约定
 
@@ -111,23 +111,23 @@ actions_flat = actions_buffer.reshape(-1, *action_shape)
 # 后续按 mini_batch_size 随机切分
 ```
 
-<a name="s7-2-4"></a>
+<a id="s7-2-4"></a>
 
 ### 7.2.4 异步环境的自动 reset 语义
 
 向量环境中，当某个子环境 terminated 或 truncated 时，会**自动调用 `reset()` 并将新 episode 的首个观测写入返回值**。这意味着 rollout buffer 中相邻时间步可能属于不同 episode。GAE 计算时必须依靠 `terminated` 标志来正确断开 episode 边界，而不能假设连续的时间步属于同一 episode。这也是为什么 7.1.2 节中 `nextnonterminal` 的处理如此重要。
 
-<a name="s7-3"></a>
+<a id="s7-3"></a>
 
 ## 7.3 网络结构设计的数学考量
 
-<a name="s7-3-1"></a>
+<a id="s7-3-1"></a>
 
 ### 7.3.1 MLP 主干配置
 
 对于 CartPole 等低维任务，两层 $`64 \times 64`$ + `tanh` 激活即可；对于 LunarLander 及以上复杂度的任务，推荐 $`256 \times 256`$ + `ReLU`。激活函数的选择影响梯度传播：`tanh` 输出有界 $`[-1,1]`$，适合小网络；`ReLU` 避免饱和但可能产生死神经元，配合正交初始化可缓解。
 
-<a name="s7-3-2"></a>
+<a id="s7-3-2"></a>
 
 ### 7.3.2 初始化对策略梯度的特殊影响
 
@@ -154,7 +154,7 @@ layer_init(nn.Linear(64, action_dim), std=0.01)
 layer_init(nn.Linear(64, 1), std=1.0)
 ```
 
-<a name="s7-3-3"></a>
+<a id="s7-3-3"></a>
 
 ### 7.3.3 连续动作空间的对数标准差参数化
 
@@ -195,7 +195,7 @@ class ContinuousActor(nn.Module):
         return action, log_prob, entropy, mean
 ```
 
-<a name="s7-3-4"></a>
+<a id="s7-3-4"></a>
 
 ### 7.3.4 Actor 与 Critic 共享主干 vs 分离主干
 
@@ -219,13 +219,13 @@ class SharedActorCritic(nn.Module):
 
 **分离主干**各自独立前向，互不干扰，但计算量翻倍。实践中两者效果差异不大，初学者建议先用分离主干以避免调参复杂度。若使用共享主干，建议将 $`c_1`$ 设为较小值（如 0.5），并在监控 `explained_variance` 确认 critic 收敛后再考虑增大。
 
-<a name="s7-4"></a>
+<a id="s7-4"></a>
 
 ## 7.4 PPO 完整参考实现
 
 以下是一份可直接运行于 CartPole-v1 的 PPO 实现，每段代码均标注对应的理论公式出处。
 
-<a name="s7-4-1"></a>
+<a id="s7-4-1"></a>
 
 ### 7.4.1 策略网络与价值网络
 
@@ -282,7 +282,7 @@ class DiscreteActorCritic(nn.Module):
         return action, log_prob, entropy, value
 ```
 
-<a name="s7-4-2"></a>
+<a id="s7-4-2"></a>
 
 ### 7.4.2 Rollout 存储
 
@@ -321,7 +321,7 @@ class RolloutBuffer:
         self.next_values = next_values
 ```
 
-<a name="s7-4-3"></a>
+<a id="s7-4-3"></a>
 
 ### 7.4.3 GAE 与 Return Target 计算
 
@@ -362,7 +362,7 @@ def compute_gae(buffer, gamma=0.99, lam=0.95):
     return advantages, returns
 ```
 
-<a name="s7-4-4"></a>
+<a id="s7-4-4"></a>
 
 ### 7.4.4 Mini-batch 更新循环
 
@@ -473,7 +473,7 @@ def update(agent, optimizer, buffer, advantages, returns,
     }
 ```
 
-<a name="s7-4-5"></a>
+<a id="s7-4-5"></a>
 
 ### 7.4.5 学习率线性衰减
 
@@ -492,7 +492,7 @@ def get_lr(base_lr, current_step, total_steps):
 #     param_group["lr"] = lr
 ```
 
-<a name="s7-4-6"></a>
+<a id="s7-4-6"></a>
 
 ### 7.4.6 梯度裁剪澄清
 
@@ -504,17 +504,17 @@ $$
 
 若 $`\|g\|_2 > \text{max\_grad\_norm}`$，则将所有梯度分量等比例缩放至 $`\text{max\_grad\_norm}`$。这与 PPO-Clip 中 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)`$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
 
-<a name="s7-5"></a>
+<a id="s7-5"></a>
 
 ## 7.5 数值稳定性与实现细节的数学解释
 
-<a name="s7-5-1"></a>
+<a id="s7-5-1"></a>
 
 ### 7.5.1 对数域计算比率
 
 代码中始终使用 `logratio = new_logprob - old_logprob` 然后 `ratio = logratio.exp()`，而非直接 `ratio = new_prob / old_prob`。原因：概率值可能极小（如 $`10^{-30}`$），直接相除会导致浮点下溢或上溢。对数域减法等价于原始域除法，且 `log_prob` 本身由分布对象精确计算，数值范围可控。仅在最终需要 `ratio` 时才做一次 `exp`，此时 `logratio` 通常在 $`[-10, 10]`$ 范围内，不会溢出。
 
-<a name="s7-5-2"></a>
+<a id="s7-5-2"></a>
 
 ### 7.5.2 近似 KL 的选择
 
@@ -525,24 +525,24 @@ $$
 
 推荐使用第二种作为 early stopping 判据，因为它不会出现虚假的负值触发。
 
-<a name="s7-5-3"></a>
+<a id="s7-5-3"></a>
 
 ### 7.5.3 优势归一化的位置
 
 - **整个 rollout 归一化**：统计量基于全部 $`T \times N`$ 个样本，方差估计更准，但不同 mini-batch 的优势尺度相同，丧失了 batch 内的自适应调节能力。
 - **Mini-batch 内归一化**：每个 mini-batch 独立标准化。实践中更常用，因为：(1) 减少了不同 mini-batch 之间优势尺度的差异对梯度的影响；(2) 等价于对每个 mini-batch 做了局部的基线校正，进一步降低方差。
 
-<a name="s7-5-4"></a>
+<a id="s7-5-4"></a>
 
 ### 7.5.4 价值裁剪
 
 价值裁剪将 $`V_\theta(s)`$ 限制在 $`[V_{\text{old}}(s) - \epsilon_v, V_{\text{old}}(s) + \epsilon_v]`$ 内，意图防止价值函数单次更新过大。但如第 6 章所述，其收益存在争议：价值函数的优化目标是 MSE，不像策略目标那样有单调改进保证，裁剪反而可能阻碍 critic 快速收敛。多数现代实现默认关闭价值裁剪，仅在发现 `value_loss` 剧烈震荡时才考虑启用。
 
-<a name="s7-6"></a>
+<a id="s7-6"></a>
 
 ## 7.6 训练诊断指标与调参方法论
 
-<a name="s7-6-1"></a>
+<a id="s7-6-1"></a>
 
 ### 7.6.1 必须监控的量及其健康范围
 
@@ -557,7 +557,7 @@ $$
 | policy_loss | $`-\mathbb{E}[\min(r\hat{A}, \text{clip}(r)\hat{A})]`$ | 无固定范围 | 突增：结合 approx_kl 判断 |
 | grad_norm | $`\|\nabla L\|_2`$（裁剪前） | 平稳 | 突增：不稳定前兆，检查奖励尺度、观测归一化 |
 
-<a name="s7-6-2"></a>
+<a id="s7-6-2"></a>
 
 ### 7.6.2 调参优先级
 
@@ -567,7 +567,7 @@ $$
 2. **再调 $`\varepsilon`$ 与 $`K`$**：$`\varepsilon`$ 控制单次更新的信任域大小，$`K`$ 控制数据复用程度。
 3. **$`\gamma`$ 和 $`\lambda`$ 一般用默认值**（0.99 和 0.95），除非任务有特殊的时间尺度需求。
 
-<a name="s7-6-3"></a>
+<a id="s7-6-3"></a>
 
 ### 7.6.3 训练崩溃排查清单
 
@@ -578,7 +578,7 @@ $$
 3. **看 `approx_kl`**：若持续 > 0.02 → 降 lr、减少 K、增大 ε。
 4. **检查观测/奖励归一化**：缺失归一化是 PPO 崩溃的最常见原因之一。
 
-<a name="s7-6-4"></a>
+<a id="s7-6-4"></a>
 
 ### 7.6.4 观测归一化与奖励归一化
 
@@ -592,7 +592,7 @@ $$
 
 **奖励缩放（Reward Scaling）**：将奖励除以 running std，使回报的尺度大致在 $`[-1, 1]`$ 范围内。**注意**：奖励缩放会改变 $`\gamma`$ 的有效含义——缩放后的折扣因子等效于 $`\gamma' = \gamma \cdot \sigma_{\text{old}} / \sigma_{\text{new}}`$，在 running std 尚未收敛的训练初期，这种效应尤为明显。因此建议在 running statistics 稳定后再评估最终性能。
 
-<a name="s7-7"></a>
+<a id="s7-7"></a>
 
 ## 7.7 常见坑清单
 
@@ -609,11 +609,11 @@ $$
 | 9 | 更新阶段的 logprob 与 rollout 阶段不一致 | rollout 时未在 `torch.no_grad()` 下同时取出 action 和 logprob | 确保 `action, logprob, _, _ = agent.get_action_and_value(obs)` 在同一次前向中完成 |
 | 10 | 评测性能远低于训练性能 | 评测时仍使用采样动作而非确定性动作 | 评测时用 `dist.mode`（离散）或 `mean`（连续）代替 `sample()` |
 
-<a name="s7-8"></a>
+<a id="s7-8"></a>
 
 ## 7.8 推荐学习资源与进阶路径
 
-<a name="s7-8-1"></a>
+<a id="s7-8-1"></a>
 
 ### 7.8.1 论文清单（按阅读顺序）
 
@@ -628,7 +628,7 @@ $$
 9. **Ouyang et al. (2022)**《Training Language Models to Follow Instructions with Human Feedback》— InstructGPT，RLHF 工业化落地的里程碑。
 10. **Shao et al. (2024)**《DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models》— GRPO（Group Relative Policy Optimization），PPO 在推理任务中的最新变体。
 
-<a name="s7-8-2"></a>
+<a id="s7-8-2"></a>
 
 ### 7.8.2 代码库
 
@@ -639,7 +639,7 @@ $$
 | **OpenAI Spinning Up** | 配套教程质量最高 | 理论学习与代码实践并行 |
 | **TRL** (Hugging Face) | RLHF/PPO 专用 | LLM 对齐、RLHF 研究 |
 
-<a name="s7-8-3"></a>
+<a id="s7-8-3"></a>
 
 ### 7.8.3 务实的学习路径建议
 
@@ -649,7 +649,7 @@ $$
 4. **阅读 RLHF 实现**：对照 TRL 的 PPO trainer，理解 token 级别的 PPO 与经典 PPO 的差异（KL 奖励塑形、reference model 等）。
 5. **尝试改进**：在理解标准 PPO 后，尝试实现 PPO-Penalty、GRPO 等变体，加深对算法设计空间的理解。
 
-<a name="s7-9"></a>
+<a id="s7-9"></a>
 
 ## 7.9 本章小结与下一步
 
