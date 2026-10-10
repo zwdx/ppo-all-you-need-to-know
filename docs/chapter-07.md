@@ -39,11 +39,11 @@ Gymnasium 是 OpenAI Gym 的官方继任者，提供了标准化的强化学习�
 
 ### 7.1.2 terminated 与 truncated 的语义区别
 
-**`terminated=True`** 表示环境因内在逻辑真正结束了一个 episode（例如 CartPole 中杆子倒下、LunarLander 中着陆器坠毁）。此时状态 $s_{t+1}$ 是吸收态（absorbing state），其价值 $V(s_{t+1}) = 0$，在 GAE 计算中**不应 bootstrap**。
+**`terminated=True`** 表示环境因内在逻辑真正结束了一个 episode（例如 CartPole 中杆子倒下、LunarLander 中着陆器坠毁）。此时状态 $`s_{t+1}`$ 是吸收态（absorbing state），其价值 $`V(s_{t+1}) = 0`$，在 GAE 计算中**不应 bootstrap**。
 
-**`truncated=True`** 表示环境仅因外部限制（通常是达到最大步数上限）而中断，episode 在 MDP 意义上并未结束。此时 $s_{t+1}$ 仍然是一个有效的非终止状态，**必须用 $V(s_{t+1})$ 进行 bootstrap**，否则会将"时间到"错误地当作"失败"，导致价值函数系统性低估。
+**`truncated=True`** 表示环境仅因外部限制（通常是达到最大步数上限）而中断，episode 在 MDP 意义上并未结束。此时 $`s_{t+1}`$ 仍然是一个有效的非终止状态，**必须用 $`V(s_{t+1})`$ 进行 bootstrap**，否则会将"时间到"错误地当作"失败"，导致价值函数系统性低估。
 
-对应第 4 章的 TD 误差 $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$，正确的写法应为：
+对应第 4 章的 TD 误差 $`\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)`$，正确的写法应为：
 
 $$
 \delta_t = r_t + \gamma \cdot (1 - \text{terminated}_t) \cdot V(s_{t+1}) - V(s_t)
@@ -83,7 +83,7 @@ for t in reversed(range(num_steps)):
 
 ### 7.2.1 为什么 PPO 必须用向量环境
 
-第 6 章指出 PPO 每次更新需要 $N \times T$ 个样本（$N$ 个并行环境各采集 $T$ 步）。单环境采集效率极低，且批量过小会导致：(1) 优势估计方差过大；(2) mini-batch 更新不稳定。向量环境通过并行化解决这两个问题。
+第 6 章指出 PPO 每次更新需要 $`N \times T`$ 个样本（$`N`$ 个并行环境各采集 $`T`$ 步）。单环境采集效率极低，且批量过小会导致：(1) 优势估计方差过大；(2) mini-batch 更新不稳定。向量环境通过并行化解决这两个问题。
 
 <a name="s7-2-2"></a>
 
@@ -91,14 +91,14 @@ for t in reversed(range(num_steps)):
 
 Gymnasium 提供两种向量环境封装：
 
-- **`SyncVectorEnv`**：在同一进程中顺序执行 $N$ 个环境。优点是共享内存、无序列化开销；缺点是总耗时为 $N$ 倍单环境耗时。适合轻量级环境（如 CartPole）。
+- **`SyncVectorEnv`**：在同一进程中顺序执行 $`N`$ 个环境。优点是共享内存、无序列化开销；缺点是总耗时为 $`N`$ 倍单环境耗时。适合轻量级环境（如 CartPole）。
 - **`AsyncVectorEnv`**：每个环境运行在独立子进程中，通过管道通信。真正的并行加速，适合计算密集型环境。代价是进程间数据序列化开销和更复杂的调试体验。
 
 <a name="s7-2-3"></a>
 
 ### 7.2.3 Rollout Buffer 的形状约定
 
-推荐约定：buffer 形状为 $(T, N, \ldots)$，即第一维是时间步、第二维是环境索引。填充完毕后 flatten 前两维得到 $(T \times N, \ldots)$ 用于 mini-batch 采样：
+推荐约定：buffer 形状为 $`(T, N, \ldots)`$，即第一维是时间步、第二维是环境索引。填充完毕后 flatten 前两维得到 $`(T \times N, \ldots)`$ 用于 mini-batch 采样：
 
 ```python
 # 采集阶段：shape = (num_steps, num_envs, ...)
@@ -125,7 +125,7 @@ actions_flat = actions_buffer.reshape(-1, *action_shape)
 
 ### 7.3.1 MLP 主干配置
 
-对于 CartPole 等低维任务，两层 $64 \times 64$ + `tanh` 激活即可；对于 LunarLander 及以上复杂度的任务，推荐 $256 \times 256$ + `ReLU`。激活函数的选择影响梯度传播：`tanh` 输出有界 $[-1,1]$，适合小网络；`ReLU` 避免饱和但可能产生死神经元，配合正交初始化可缓解。
+对于 CartPole 等低维任务，两层 $`64 \times 64`$ + `tanh` 激活即可；对于 LunarLander 及以上复杂度的任务，推荐 $`256 \times 256`$ + `ReLU`。激活函数的选择影响梯度传播：`tanh` 输出有界 $`[-1,1]`$，适合小网络；`ReLU` 避免饱和但可能产生死神经元，配合正交初始化可缓解。
 
 <a name="s7-3-2"></a>
 
@@ -133,8 +133,8 @@ actions_flat = actions_buffer.reshape(-1, *action_shape)
 
 PPO 对网络初始化极其敏感。**最后一层输出必须用小权重初始化**，使初始策略接近均匀分布（离散）或窄高斯（连续）。数学解释如下：
 
-- **离散动作空间**：初始 logits 接近 $0$ → softmax 输出接近均匀分布 → 熵 $H[\pi]$ 最大 → 探索最充分。若初始 logits 绝对值过大，策略过早偏向某些动作，熵崩塌，难以恢复。
-- **连续动作空间**：初始均值接近 $0$、标准差适中（如 $\sigma \approx 1$）→ 避免一开始就过度自信地集中在某个动作附近。
+- **离散动作空间**：初始 logits 接近 $`0`$ → softmax 输出接近均匀分布 → 熵 $`H[\pi]`$ 最大 → 探索最充分。若初始 logits 绝对值过大，策略过早偏向某些动作，熵崩塌，难以恢复。
+- **连续动作空间**：初始均值接近 $`0`$、标准差适中（如 $`\sigma \approx 1`$）→ 避免一开始就过度自信地集中在某个动作附近。
 
 PyTorch 中使用正交初始化（orthogonal initialization）：
 
@@ -158,15 +158,15 @@ layer_init(nn.Linear(64, 1), std=1.0)
 
 ### 7.3.3 连续动作空间的对数标准差参数化
 
-对于对角 Gaussian 策略（对应第 1 章和第 5 章），标准差 $\sigma$ 的参数化有两种选择：
+对于对角 Gaussian 策略（对应第 1 章和第 5 章），标准差 $`\sigma`$ 的参数化有两种选择：
 
 1. **独立参数**：`log_std = nn.Parameter(torch.zeros(action_dim))`，与状态无关。简单、参数少，适合大多数连续控制任务。
 2. **网络输出**：由主干网络的额外头输出，与状态相关。表达力更强但训练更不稳定。
 
-无论哪种方式，**必须约束 `log_std` 的范围**，通常 clip 到 $[-20, 2]$（对应 $\sigma \in [2 \times 10^{-9}, 7.39]$）或更保守的 $[-5, 2]$。原因：
+无论哪种方式，**必须约束 `log_std` 的范围**，通常 clip 到 $`[-20, 2]`$（对应 $`\sigma \in [2 \times 10^{-9}, 7.39]`$）或更保守的 $`[-5, 2]`$。原因：
 
-- `log_std` 过小 → $\sigma \to 0$ → 策略退化为确定性策略 → 熵崩塌 → 无法再探索，且 KL 散度计算可能出现数值异常。
-- `log_std` 过大 → $\sigma$ 爆炸 → 动作采样范围不合理 → 奖励信号被噪声淹没。
+- `log_std` 过小 → $`\sigma \to 0`$ → 策略退化为确定性策略 → 熵崩塌 → 无法再探索，且 KL 散度计算可能出现数值异常。
+- `log_std` 过大 → $`\sigma`$ 爆炸 → 动作采样范围不合理 → 奖励信号被噪声淹没。
 
 ```python
 class ContinuousActor(nn.Module):
@@ -217,7 +217,7 @@ class SharedActorCritic(nn.Module):
         ...
 ```
 
-**分离主干**各自独立前向，互不干扰，但计算量翻倍。实践中两者效果差异不大，初学者建议先用分离主干以避免调参复杂度。若使用共享主干，建议将 $c_1$ 设为较小值（如 0.5），并在监控 `explained_variance` 确认 critic 收敛后再考虑增大。
+**分离主干**各自独立前向，互不干扰，但计算量翻倍。实践中两者效果差异不大，初学者建议先用分离主干以避免调参复杂度。若使用共享主干，建议将 $`c_1`$ 设为较小值（如 0.5），并在监控 `explained_variance` 确认 critic 收敛后再考虑增大。
 
 <a name="s7-4"></a>
 
@@ -502,7 +502,7 @@ $$
 \|g\|_2 = \sqrt{\sum_i g_i^2}
 $$
 
-若 $\|g\|_2 > \text{max\_grad\_norm}$，则将所有梯度分量等比例缩放至 $\text{max\_grad\_norm}$。这与 PPO-Clip 中 $\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
+若 $`\|g\|_2 > \text{max\_grad\_norm}`$，则将所有梯度分量等比例缩放至 $`\text{max\_grad\_norm}`$。这与 PPO-Clip 中 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)`$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
 
 <a name="s7-5"></a>
 
@@ -512,7 +512,7 @@ $$
 
 ### 7.5.1 对数域计算比率
 
-代码中始终使用 `logratio = new_logprob - old_logprob` 然后 `ratio = logratio.exp()`，而非直接 `ratio = new_prob / old_prob`。原因：概率值可能极小（如 $10^{-30}$），直接相除会导致浮点下溢或上溢。对数域减法等价于原始域除法，且 `log_prob` 本身由分布对象精确计算，数值范围可控。仅在最终需要 `ratio` 时才做一次 `exp`，此时 `logratio` 通常在 $[-10, 10]$ 范围内，不会溢出。
+代码中始终使用 `logratio = new_logprob - old_logprob` 然后 `ratio = logratio.exp()`，而非直接 `ratio = new_prob / old_prob`。原因：概率值可能极小（如 $`10^{-30}`$），直接相除会导致浮点下溢或上溢。对数域减法等价于原始域除法，且 `log_prob` 本身由分布对象精确计算，数值范围可控。仅在最终需要 `ratio` 时才做一次 `exp`，此时 `logratio` 通常在 $`[-10, 10]`$ 范围内，不会溢出。
 
 <a name="s7-5-2"></a>
 
@@ -520,8 +520,8 @@ $$
 
 两种常见近似：
 
-1. **一阶近似**：$\hat{D}_{KL}^{(1)} = \mathbb{E}[\log \pi_{\text{old}} - \log \pi_{\text{new}}]$。简单但可能为负（违反 KL 非负性），不适合做 early stopping 判据。
-2. **Schulman 二阶近似**：$\hat{D}_{KL}^{(2)} = \mathbb{E}[r - 1 - \log r]$，其中 $r = \pi_{\text{new}} / \pi_{\text{old}}$。由不等式 $x - 1 \geq \log x$ 保证恒非负，且在 $r \approx 1$ 时二阶逼近真实 KL。
+1. **一阶近似**：$`\hat{D}_{KL}^{(1)} = \mathbb{E}[\log \pi_{\text{old}} - \log \pi_{\text{new}}]`$。简单但可能为负（违反 KL 非负性），不适合做 early stopping 判据。
+2. **Schulman 二阶近似**：$`\hat{D}_{KL}^{(2)} = \mathbb{E}[r - 1 - \log r]`$，其中 $`r = \pi_{\text{new}} / \pi_{\text{old}}`$。由不等式 $`x - 1 \geq \log x`$ 保证恒非负，且在 $`r \approx 1`$ 时二阶逼近真实 KL。
 
 推荐使用第二种作为 early stopping 判据，因为它不会出现虚假的负值触发。
 
@@ -529,14 +529,14 @@ $$
 
 ### 7.5.3 优势归一化的位置
 
-- **整个 rollout 归一化**：统计量基于全部 $T \times N$ 个样本，方差估计更准，但不同 mini-batch 的优势尺度相同，丧失了 batch 内的自适应调节能力。
+- **整个 rollout 归一化**：统计量基于全部 $`T \times N`$ 个样本，方差估计更准，但不同 mini-batch 的优势尺度相同，丧失了 batch 内的自适应调节能力。
 - **Mini-batch 内归一化**：每个 mini-batch 独立标准化。实践中更常用，因为：(1) 减少了不同 mini-batch 之间优势尺度的差异对梯度的影响；(2) 等价于对每个 mini-batch 做了局部的基线校正，进一步降低方差。
 
 <a name="s7-5-4"></a>
 
 ### 7.5.4 价值裁剪
 
-价值裁剪将 $V_\theta(s)$ 限制在 $[V_{\text{old}}(s) - \epsilon_v, V_{\text{old}}(s) + \epsilon_v]$ 内，意图防止价值函数单次更新过大。但如第 6 章所述，其收益存在争议：价值函数的优化目标是 MSE，不像策略目标那样有单调改进保证，裁剪反而可能阻碍 critic 快速收敛。多数现代实现默认关闭价值裁剪，仅在发现 `value_loss` 剧烈震荡时才考虑启用。
+价值裁剪将 $`V_\theta(s)`$ 限制在 $`[V_{\text{old}}(s) - \epsilon_v, V_{\text{old}}(s) + \epsilon_v]`$ 内，意图防止价值函数单次更新过大。但如第 6 章所述，其收益存在争议：价值函数的优化目标是 MSE，不像策略目标那样有单调改进保证，裁剪反而可能阻碍 critic 快速收敛。多数现代实现默认关闭价值裁剪，仅在发现 `value_loss` 剧烈震荡时才考虑启用。
 
 <a name="s7-6"></a>
 
@@ -548,14 +548,14 @@ $$
 
 | 指标 | 数学含义 | 健康范围 | 异常排查方向 |
 |------|---------|---------|-------------|
-| Episode Return | $\mathbb{E}[\sum \gamma^t r_t]$，主性能指标 | 持续上升 | 若不升：检查奖励归一化、网络容量、lr |
-| approx_kl | $\mathbb{E}[r-1-\log r]$，策略变化幅度 | < 0.015~0.02 | 过大：降 lr、减 K、增大 ε |
+| Episode Return | $`\mathbb{E}[\sum \gamma^t r_t]`$，主性能指标 | 持续上升 | 若不升：检查奖励归一化、网络容量、lr |
+| approx_kl | $`\mathbb{E}[r-1-\log r]`$，策略变化幅度 | < 0.015~0.02 | 过大：降 lr、减 K、增大 ε |
 | clip_fraction | 被 clip 的样本占比 | 0.05~0.2 | ≈0：ε 太松或更新太保守；≈1：策略剧变 |
-| Entropy | $H[\pi]$，探索程度 | 缓慢下降 | 突然崩塌：log_std 塌缩、lr 过高 |
-| explained_variance | $1 - \frac{\text{Var}(R-V)}{\text{Var}(R)}$，critic 拟合质量 | > 0.5 | < 0：critic 比常数预测还差，检查网络/lr/归一化 |
-| value_loss | $\mathbb{E}[(V_\theta(s) - \hat{R})^2]$ | 持续下降 | 不降或震荡：critic 容量不足、lr 不当 |
-| policy_loss | $-\mathbb{E}[\min(r\hat{A}, \text{clip}(r)\hat{A})]$ | 无固定范围 | 突增：结合 approx_kl 判断 |
-| grad_norm | $\|\nabla L\|_2$（裁剪前） | 平稳 | 突增：不稳定前兆，检查奖励尺度、观测归一化 |
+| Entropy | $`H[\pi]`$，探索程度 | 缓慢下降 | 突然崩塌：log_std 塌缩、lr 过高 |
+| explained_variance | $`1 - \frac{\text{Var}(R-V)}{\text{Var}(R)}`$，critic 拟合质量 | > 0.5 | < 0：critic 比常数预测还差，检查网络/lr/归一化 |
+| value_loss | $`\mathbb{E}[(V_\theta(s) - \hat{R})^2]`$ | 持续下降 | 不降或震荡：critic 容量不足、lr 不当 |
+| policy_loss | $`-\mathbb{E}[\min(r\hat{A}, \text{clip}(r)\hat{A})]`$ | 无固定范围 | 突增：结合 approx_kl 判断 |
+| grad_norm | $`\|\nabla L\|_2`$（裁剪前） | 平稳 | 突增：不稳定前兆，检查奖励尺度、观测归一化 |
 
 <a name="s7-6-2"></a>
 
@@ -564,8 +564,8 @@ $$
 基于 Andrychowicz et al. (2021) 的大规模实证结论：
 
 1. **先调学习率与网络结构**：这两个因素对性能影响最大。lr 过高导致 KL 爆炸，过低导致收敛极慢。
-2. **再调 $\varepsilon$ 与 $K$**：$\varepsilon$ 控制单次更新的信任域大小，$K$ 控制数据复用程度。
-3. **$\gamma$ 和 $\lambda$ 一般用默认值**（0.99 和 0.95），除非任务有特殊的时间尺度需求。
+2. **再调 $`\varepsilon`$ 与 $`K`$**：$`\varepsilon`$ 控制单次更新的信任域大小，$`K`$ 控制数据复用程度。
+3. **$`\gamma`$ 和 $`\lambda`$ 一般用默认值**（0.99 和 0.95），除非任务有特殊的时间尺度需求。
 
 <a name="s7-6-3"></a>
 
@@ -588,9 +588,9 @@ $$
 \bar{x}_n = \bar{x}_{n-1} + \frac{x_n - \bar{x}_{n-1}}{n}, \quad M_n = M_{n-1} + (x_n - \bar{x}_{n-1})(x_n - \bar{x}_n)
 $$
 
-其中 $\sigma_n = \sqrt{M_n / n}$。PPO 对观测归一化极其敏感，尤其是多环境并行时，统计量必须用**全体环境的数据**更新，而非单个环境。
+其中 $`\sigma_n = \sqrt{M_n / n}`$。PPO 对观测归一化极其敏感，尤其是多环境并行时，统计量必须用**全体环境的数据**更新，而非单个环境。
 
-**奖励缩放（Reward Scaling）**：将奖励除以 running std，使回报的尺度大致在 $[-1, 1]$ 范围内。**注意**：奖励缩放会改变 $\gamma$ 的有效含义——缩放后的折扣因子等效于 $\gamma' = \gamma \cdot \sigma_{\text{old}} / \sigma_{\text{new}}$，在 running std 尚未收敛的训练初期，这种效应尤为明显。因此建议在 running statistics 稳定后再评估最终性能。
+**奖励缩放（Reward Scaling）**：将奖励除以 running std，使回报的尺度大致在 $`[-1, 1]`$ 范围内。**注意**：奖励缩放会改变 $`\gamma`$ 的有效含义——缩放后的折扣因子等效于 $`\gamma' = \gamma \cdot \sigma_{\text{old}} / \sigma_{\text{new}}`$，在 running std 尚未收敛的训练初期，这种效应尤为明显。因此建议在 running statistics 稳定后再评估最终性能。
 
 <a name="s7-7"></a>
 
