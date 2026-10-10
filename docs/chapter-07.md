@@ -8,15 +8,15 @@
 
 **本章目录**
 
-- [7.1 环境接口与 Gymnasium](#s7-1)
-- [7.2 向量环境（Vectorized Environments）](#s7-2)
-- [7.3 网络结构设计的数学考量](#s7-3)
-- [7.4 PPO 完整参考实现](#s7-4)
-- [7.5 数值稳定性与实现细节的数学解释](#s7-5)
-- [7.6 训练诊断指标与调参方法论](#s7-6)
-- [7.7 常见坑清单](#s7-7)
-- [7.8 推荐学习资源与进阶路径](#s7-8)
-- [7.9 本章小结与下一步](#s7-9)
+- [7.1 环境接口与 Gymnasium](#user-content-s7-1)
+- [7.2 向量环境（Vectorized Environments）](#user-content-s7-2)
+- [7.3 网络结构设计的数学考量](#user-content-s7-3)
+- [7.4 PPO 完整参考实现](#user-content-s7-4)
+- [7.5 数值稳定性与实现细节的数学解释](#user-content-s7-5)
+- [7.6 训练诊断指标与调参方法论](#user-content-s7-6)
+- [7.7 常见坑清单](#user-content-s7-7)
+- [7.8 推荐学习资源与进阶路径](#user-content-s7-8)
+- [7.9 本章小结与下一步](#user-content-s7-9)
 
 前六章完成了 PPO 从数学基础到算法本体的全部理论推导。本章的目标是将这些公式逐行落地为可运行的 PyTorch 代码，并明确指出每一处实现与理论之间的差异、近似和数值稳定性处理。读者在阅读本章时，应随时对照前文公式，理解"代码为什么这样写"而非仅仅记住模板。
 
@@ -45,9 +45,9 @@ Gymnasium 是 OpenAI Gym 的官方继任者，提供了标准化的强化学习�
 
 对应第 4 章的 TD 误差 $`\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)`$，正确的写法应为：
 
-$$
+```math
 \delta_t = r_t + \gamma \cdot (1 - \text{terminated}_t) \cdot V(s_{t+1}) - V(s_t)
-$$
+```
 
 注意这里只屏蔽 `terminated`，不屏蔽 `truncated`。一个常见的错误写法是 `nextnonterminal = 1.0 - dones[t+1]`，其中 `dones = terminated | truncated`——这会在 truncated 时也把 bootstrap 项置零，等价于把截断误认为终止。**这是 PPO 实现中最隐蔽且影响最大的 bug 之一。**
 
@@ -498,9 +498,9 @@ def get_lr(base_lr, current_step, total_steps):
 
 `torch.nn.utils.clip_grad_norm_(params, max_grad_norm=0.5)` 裁剪的是所有参数梯度的**全局 L2 范数**：
 
-$$
+```math
 \|g\|_2 = \sqrt{\sum_i g_i^2}
-$$
+```
 
 若 $`\|g\|_2 > \text{max\_grad\_norm}`$，则将所有梯度分量等比例缩放至 $`\text{max\_grad\_norm}`$。这与 PPO-Clip 中 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)`$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
 
@@ -584,9 +584,9 @@ $$
 
 **观测归一化（Observation Normalization）**：使用 Welford 在线算法维护 running mean/std：
 
-$$
+```math
 \bar{x}_n = \bar{x}_{n-1} + \frac{x_n - \bar{x}_{n-1}}{n}, \quad M_n = M_{n-1} + (x_n - \bar{x}_{n-1})(x_n - \bar{x}_n)
-$$
+```
 
 其中 $`\sigma_n = \sqrt{M_n / n}`$。PPO 对观测归一化极其敏感，尤其是多环境并行时，统计量必须用**全体环境的数据**更新，而非单个环境。
 

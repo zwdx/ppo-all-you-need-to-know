@@ -8,17 +8,17 @@
 
 **本章目录**
 
-- [3.1 优化目标的两种等价形式](#s3-1)
-- [3.2 策略梯度定理的完整推导](#s3-2)
-- [3.3 因果性与 Reward-to-Go](#s3-3)
-- [3.4 用 Q 函数表达的策略梯度定理](#s3-4)
-- [3.5 基线理论与优势函数](#s3-5)
-- [3.6 策略梯度的偏差-方差分解框架](#s3-6)
-- [3.7 Actor-Critic 架构](#s3-7)
-- [3.8 n-step 方法与 A2C/A3C](#s3-8)
-- [3.9 REINFORCE 伪代码](#s3-9)
-- [3.10 策略梯度方法的固有缺陷](#s3-10)
-- [3.11 本章小结与自测](#s3-11)
+- [3.1 优化目标的两种等价形式](#user-content-s3-1)
+- [3.2 策略梯度定理的完整推导](#user-content-s3-2)
+- [3.3 因果性与 Reward-to-Go](#user-content-s3-3)
+- [3.4 用 Q 函数表达的策略梯度定理](#user-content-s3-4)
+- [3.5 基线理论与优势函数](#user-content-s3-5)
+- [3.6 策略梯度的偏差-方差分解框架](#user-content-s3-6)
+- [3.7 Actor-Critic 架构](#user-content-s3-7)
+- [3.8 n-step 方法与 A2C/A3C](#user-content-s3-8)
+- [3.9 REINFORCE 伪代码](#user-content-s3-9)
+- [3.10 策略梯度方法的固有缺陷](#user-content-s3-10)
+- [3.11 本章小结与自测](#user-content-s3-11)
 
 <a id="s3-1"></a>
 
@@ -28,35 +28,35 @@
 
 首先明确优化目标。设 $`\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \dots)`$ 为一条轨迹（trajectory），其累积折扣回报为：
 
-$$
+```math
 R(\tau) = \sum_{t=0}^{\infty} \gamma^t r_t
-$$
+```
 
 其中 $`\gamma \in [0,1]`$ 为折扣因子（见第 2 章）。策略 $`\pi_\theta`$ 下的期望回报定义为：
 
-$$
+```math
 J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\big[R(\tau)\big] = \int p_\theta(\tau)\, R(\tau)\, d\tau \tag{3.1}
-$$
+```
 
 这里 $`p_\theta(\tau)`$ 是策略 $`\pi_\theta`$ 生成的轨迹分布。具体地，若初始状态分布为 $`\rho_0(s_0)`$，环境动力学（transition dynamics）为 $`P(s_{t+1}|s_t, a_t)`$，则：
 
-$$
+```math
 p_\theta(\tau) = \rho_0(s_0) \prod_{t=0}^{\infty} P(s_{t+1}|s_t, a_t)\, \pi_\theta(a_t|s_t) \tag{3.2}
-$$
+```
 
 式 (3.1) 是策略梯度的**轨迹形式**，也是后续推导的出发点。
 
 另一种等价写法利用**折扣状态访问分布**（discounted state visitation distribution）$`d^\pi(s)`$，其定义为：
 
-$$
+```math
 d^\pi(s) = (1-\gamma) \sum_{t=0}^{\infty} \gamma^t \Pr(s_t = s \mid \pi) \tag{3.3}
-$$
+```
 
 系数 $`(1-\gamma)`$ 使 $`d^\pi(s)`$ 归一化为概率分布（当 $`\gamma < 1`$ 时）。可以证明（推导见第 2 章）：
 
-$$
+```math
 J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta}}\big[V^{\pi_\theta}(s)\big] \tag{3.4}
-$$
+```
 
 式 (3.4) 在理论分析中非常方便，但在实际计算策略梯度时，我们通常使用式 (3.1) 的轨迹形式。原因在于：$`d^{\pi_\theta}`$ 本身依赖于 $`\theta`$，对式 (3.4) 直接求梯度会产生 $`\nabla_\theta d^{\pi_\theta}`$ 项，该项涉及整个状态空间的无穷级数，难以处理。而策略梯度定理的精妙之处恰恰在于：**对式 (3.1) 求梯度后，结果恰好可以用 $`d^{\pi_\theta}`$ 下的期望来表达**，从而绕开了对 $`d^{\pi_\theta}`$ 直接求导的困难。
 
@@ -72,39 +72,39 @@ $$
 
 从式 (3.1) 出发，假设积分与微分可交换（正则性条件，要求 $`\pi_\theta(a|s)`$ 关于 $`\theta`$ 连续可微且支撑集不随 $`\theta`$ 变化），有：
 
-$$
+```math
 \nabla_\theta J(\theta) = \nabla_\theta \int p_\theta(\tau)\, R(\tau)\, d\tau = \int \nabla_\theta p_\theta(\tau)\, R(\tau)\, d\tau \tag{3.5}
-$$
+```
 
 关键技巧是**乘除 $`p_\theta(\tau)`$**（即似然比技巧 / likelihood ratio trick，其数学基础见第 1 章）：
 
-$$
+```math
 \nabla_\theta p_\theta(\tau) = p_\theta(\tau) \cdot \frac{\nabla_\theta p_\theta(\tau)}{p_\theta(\tau)} = p_\theta(\tau) \cdot \nabla_\theta \log p_\theta(\tau) \tag{3.6}
-$$
+```
 
 代入式 (3.5)：
 
-$$
+```math
 \nabla_\theta J(\theta) = \int p_\theta(\tau) \cdot \nabla_\theta \log p_\theta(\tau) \cdot R(\tau)\, d\tau = \mathbb{E}_{\tau \sim \pi_\theta}\big[R(\tau) \cdot \nabla_\theta \log p_\theta(\tau)\big] \tag{3.7}
-$$
+```
 
 现在展开 $`\log p_\theta(\tau)`$。由式 (3.2) 取对数：
 
-$$
+```math
 \log p_\theta(\tau) = \log \rho_0(s_0) + \sum_{t=0}^{\infty} \Big[\log P(s_{t+1}|s_t, a_t) + \log \pi_\theta(a_t|s_t)\Big] \tag{3.8}
-$$
+```
 
 对 $`\theta`$ 求梯度时，注意 $`\rho_0(s_0)`$ 和 $`P(s_{t+1}|s_t, a_t)`$ **均不含 $`\theta`$**——它们由环境和初始分布决定，与策略参数无关。这正是 **model-free**（模型无关）方法的关键：我们不需要知道环境动力学的解析形式，也不需要对其求导。因此：
 
-$$
+```math
 \nabla_\theta \log p_\theta(\tau) = \sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t) \tag{3.9}
-$$
+```
 
 将式 (3.9) 代入式 (3.7)，得到 **REINFORCE** 算法的策略梯度估计量：
 
-$$
+```math
 \nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\left[R(\tau) \sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t)\right] \tag{3.10}
-$$
+```
 
 这就是策略梯度定理的最基本形式。它的含义非常直观：如果某条轨迹的回报 $`R(\tau)`$ 较高，就增大该轨迹上所有动作的概率；反之则减小。
 
@@ -114,9 +114,9 @@ $$
 
 第 1 章已经证明了似然比恒等式：对于任意关于 $`\theta`$ 可微的概率密度 $`p_\theta(x)`$ 和函数 $`f(x)`$，只要正则性条件满足，就有：
 
-$$
+```math
 \nabla_\theta \mathbb{E}_{x \sim p_\theta}[f(x)] = \mathbb{E}_{x \sim p_\theta}\big[f(x) \cdot \nabla_\theta \log p_\theta(x)\big] \tag{3.11}
-$$
+```
 
 直接将 $`x = \tau`$、$`f(\tau) = R(\tau)`$、$`p_\theta = p_\theta(\tau)`$ 代入式 (3.11)，立即得到式 (3.7)。再将式 (3.9) 代入，同样得到式 (3.10)。
 
@@ -140,20 +140,20 @@ $$
 
 **定理 3.1（因果性）**：对于 $`t' < t`$，有
 
-$$
+```math
 \mathbb{E}_{\tau \sim \pi_\theta}\big[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot r_{t'}\big] = 0 \tag{3.12}
-$$
+```
 
 **证明**：利用条件期望的塔性质（tower property / law of iterated expectations）。记 $`\tau_{0:t} = (s_0, a_0, r_0, \dots, s_t, a_t)`$ 为截至时刻 $`t`$ 的历史。注意 $`r_{t'}`$ 在 $`t' < t`$ 时是 $`\tau_{0:t}`$ 的确定性函数，而 $`\nabla_\theta \log \pi_\theta(a_t|s_t)`$ 仅依赖于 $`(s_t, a_t)`$。我们有：
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}_{\tau}\big[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot r_{t'}\big] &= \mathbb{E}_{\tau_{0:t}}\left[r_{t'} \cdot \mathbb{E}_{a_t \sim \pi_\theta(\cdot|s_t)}\big[\nabla_\theta \log \pi_\theta(a_t|s_t) \,\big|\, \tau_{0:t-1}, s_t\big]\right] \\
 &= \mathbb{E}_{\tau_{0:t}}\left[r_{t'} \cdot \nabla_\theta \sum_{a_t} \pi_\theta(a_t|s_t)\right] \\
 &= \mathbb{E}_{\tau_{0:t}}\left[r_{t'} \cdot \nabla_\theta 1\right] \\
 &= 0
 \end{aligned} \tag{3.13}
-$$
+```
 
 第二步利用了 $`s_t`$ 在给定 $`\tau_{0:t-1}`$ 后已由环境动力学确定（$`s_t`$ 是 $`\tau_{0:t-1}`$ 的函数），因此内层期望只对 $`a_t`$ 取；第三步利用了概率归一化 $`\sum_a \pi_\theta(a|s) = 1`$。**证毕。** ∎
 
@@ -165,15 +165,15 @@ $$
 
 由因果性定理，式 (3.10) 中 $`R(\tau) = \sum_{k=0}^{\infty} \gamma^k r_k`$ 里所有 $`k < t`$ 的项对第 $`t`$ 步梯度的期望贡献为零，可以安全去掉。定义 **reward-to-go**（未来回报）：
 
-$$
+```math
 G_t = \sum_{k=t}^{\infty} \gamma^{k-t} r_k \tag{3.14}
-$$
+```
 
 注意这里 $`G_t`$ 从 $`r_t`$ 开始累加，且以 $`\gamma^{k-t}`$ 而非 $`\gamma^k`$ 加权（即相对于时刻 $`t`$ 重新归一化了折扣）。于是策略梯度可以写为：
 
-$$
+```math
 \nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\left[\sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot G_t\right] \tag{3.15}
-$$
+```
 
 **关于折扣权重的说明**：有些文献使用 $`\tilde{G}_t = \sum_{k=t}^{\infty} \gamma^k r_k`$（保留全局折扣权重 $`\gamma^k`$），此时式 (3.15) 变为 $`\nabla_\theta J(\theta) = \mathbb{E}[\sum_t \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \tilde{G}_t]`$。这两种写法都是无偏的（因为被去掉的项期望为零），但方差特性略有不同。实践中更常用式 (3.14) 的定义，因为它与 $`Q^\pi(s_t, a_t)`$ 的尺度一致。
 
@@ -185,25 +185,25 @@ Reward-to-go 的意义不仅是降方差：它还将全轨迹回报替换为一�
 
 回忆第 2 章的定义：$`Q^\pi(s,a) = \mathbb{E}_{\tau \sim \pi}[G_t \mid s_t = s, a_t = a]`$。对式 (3.15) 中的期望做条件分解：
 
-$$
+```math
 \begin{aligned}
 \nabla_\theta J(\theta) &= \mathbb{E}_{\tau \sim \pi_\theta}\left[\sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot G_t\right] \\
 &= \sum_{t=0}^{\infty} \mathbb{E}_{s_t, a_t}\left[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \mathbb{E}[G_t \mid s_t, a_t]\right] \\
 &= \sum_{t=0}^{\infty} \mathbb{E}_{s_t, a_t}\left[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot Q^{\pi_\theta}(s_t, a_t)\right]
 \end{aligned} \tag{3.16}
-$$
+```
 
 进一步，$`(s_t, a_t)`$ 的边缘分布正是 $`d^{\pi_\theta}(s) \cdot \pi_\theta(a|s) / (1-\gamma)`$（注意 $`d^{\pi_\theta}`$ 的定义中包含 $`(1-\gamma)`$ 归一化因子）。将所有时间步合并为一个期望，得到**策略梯度定理的标准形式**：
 
-$$
+```math
 \nabla_\theta J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta},\, a \sim \pi_\theta(\cdot|s)}\Big[\nabla_\theta \log \pi_\theta(a|s) \cdot Q^{\pi_\theta}(s,a)\Big] \tag{3.17}
-$$
+```
 
 在实际算法中，常数因子 $`1/(1-\gamma)`$ 通常被吸收进学习率，因此常见的写法省略该因子：
 
-$$
+```math
 \nabla_\theta J(\theta) \propto \mathbb{E}_{s \sim d^{\pi_\theta},\, a \sim \pi_\theta(\cdot|s)}\Big[\nabla_\theta \log \pi_\theta(a|s) \cdot Q^{\pi_\theta}(s,a)\Big] \tag{3.18}
-$$
+```
 
 式 (3.18) 是后续所有策略梯度算法的理论基石。它告诉我们：策略梯度的方向由 $`Q^{\pi_\theta}(s,a)`$ 加权决定——好的动作（$`Q`$ 值高）获得更大的概率提升。
 
@@ -219,23 +219,23 @@ $$
 
 **定理 3.2**：对于任意只依赖状态 $`s`$ 的函数 $`b(s)`$（称为基线），有
 
-$$
+```math
 \mathbb{E}_{a \sim \pi_\theta(\cdot|s)}\big[\nabla_\theta \log \pi_\theta(a|s) \cdot b(s)\big] = 0 \tag{3.19}
-$$
+```
 
 **证明**：由于 $`b(s)`$ 不依赖 $`a`$，可以提到期望外面：
 
-$$
+```math
 b(s) \cdot \mathbb{E}_{a \sim \pi_\theta(\cdot|s)}\big[\nabla_\theta \log \pi_\theta(a|s)\big] = b(s) \cdot \nabla_\theta \sum_a \pi_\theta(a|s) = b(s) \cdot \nabla_\theta 1 = 0 \tag{3.20}
-$$
+```
 
 **证毕。** ∎
 
 这意味着我们可以将式 (3.18) 中的 $`Q^{\pi_\theta}(s,a)`$ 替换为 $`Q^{\pi_\theta}(s,a) - b(s)`$，梯度期望不变。特别地，取 $`b(s) = V^{\pi_\theta}(s)`$，得到：
 
-$$
+```math
 \nabla_\theta J(\theta) \propto \mathbb{E}_{s \sim d^{\pi_\theta},\, a \sim \pi_\theta(\cdot|s)}\Big[\nabla_\theta \log \pi_\theta(a|s) \cdot A^{\pi_\theta}(s,a)\Big] \tag{3.21}
-$$
+```
 
 其中 $`A^{\pi_\theta}(s,a) = Q^{\pi_\theta}(s,a) - V^{\pi_\theta}(s)`$ 就是第 2 章定义的**优势函数**。
 
@@ -253,21 +253,21 @@ $$
 
 既然任意 $`b(s)`$ 都不引入偏差，那么哪个 $`b(s)`$ 使方差最小？考虑单步情形（固定状态 $`s`$），梯度估计量为 $`g = \nabla_\theta \log \pi_\theta(a|s) \cdot (Q^\pi(s,a) - b(s))`$。为简化记号，令 $`\psi = \nabla_\theta \log \pi_\theta(a|s)`$，$`Q = Q^\pi(s,a)`$，则：
 
-$$
+```math
 \text{Var}[g] = \mathbb{E}_a\big[\|\psi \cdot (Q - b)\|^2\big] - \big\|\mathbb{E}_a[\psi \cdot (Q - b)]\big\|^2 \tag{3.22}
-$$
+```
 
 第二项等于 $`\|\nabla_\theta J\|^2`$，与 $`b`$ 无关（因为基线不改变期望）。因此最小化方差等价于最小化第一项。对 $`b`$ 求导并令其为零：
 
-$$
+```math
 \frac{\partial}{\partial b} \mathbb{E}_a\big[\|\psi\|^2 (Q - b)^2\big] = -2\, \mathbb{E}_a\big[\|\psi\|^2 (Q - b)\big] = 0 \tag{3.23}
-$$
+```
 
 解得**最优基线**：
 
-$$
+```math
 b^*(s) = \frac{\mathbb{E}_{a \sim \pi}\big[\|\nabla_\theta \log \pi_\theta(a|s)\|^2 \cdot Q^\pi(s,a)\big]}{\mathbb{E}_{a \sim \pi}\big[\|\nabla_\theta \log \pi_\theta(a|s)\|^2\big]} \tag{3.24}
-$$
+```
 
 注意 $`b^*(s)`$ **不是** $`V^\pi(s)`$，而是被 $`\|\nabla_\theta \log \pi_\theta(a|s)\|^2`$ 加权的 $`Q`$ 值平均。只有当 $`\|\nabla_\theta \log \pi_\theta(a|s)\|^2`$ 对所有 $`a`$ 近似相等时，$`b^*(s) \approx V^\pi(s)`$。尽管如此，实践中几乎总是使用 $`V^\pi(s)`$ 作为基线，原因是：(1) $`V^\pi(s)`$ 容易通过价值网络估计；(2) 最优基线需要额外估计 $`\|\nabla \log \pi\|^2`$，计算开销大且自身有估计误差；(3) $`V^\pi(s)`$ 在实践中已经足够有效。
 
@@ -279,9 +279,9 @@ $$
 
 将策略梯度估计量写成如下通用形式：
 
-$$
+```math
 \hat{g} = \sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \hat{A}_t \tag{3.25}
-$$
+```
 
 其中 $`\hat{A}_t`$ 是对真实优势 $`A^{\pi_\theta}(s_t, a_t)`$ 的某种估计。不同的 $`\hat{A}_t`$ 选择构成一个**偏差-方差权衡谱**：
 
@@ -309,9 +309,9 @@ $$
 ### 3.7.1 两个网络的分工
 
 - **Actor（策略网络）**$`\pi_\theta(a|s)`$：参数为 $`\theta`$，输出动作概率分布。按式 (3.21) 更新：
-  $$
+  ```math
   \theta \leftarrow \theta + \alpha_\theta \cdot \nabla_\theta \log \pi_\theta(a|s) \cdot \hat{A}(s,a) \tag{3.26}
-  $$
+  ```
 
 - **Critic（价值网络）**$`V_\phi(s)`$：参数为 $`\phi`$，估计状态值函数 $`V^{\pi_\theta}(s)`$。用于提供基线和/或优势估计。
 
@@ -321,9 +321,9 @@ $$
 
 Critic 的目标是准确估计 $`V^{\pi_\theta}(s)`$。最直接的损失函数是最小化均方误差：
 
-$$
+```math
 L_V(\phi) = \mathbb{E}_{s \sim d^{\pi_\theta}}\Big[\big(V_\phi(s) - V^{\pi_\theta}(s)\big)^2\Big] \tag{3.27}
-$$
+```
 
 但 $`V^{\pi_\theta}(s)`$ 本身未知。实践中用以下替代目标之一：
 

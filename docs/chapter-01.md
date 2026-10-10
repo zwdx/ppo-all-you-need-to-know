@@ -8,15 +8,15 @@
 
 **本章目录**
 
-- [1.1 随机变量与概率分布](#s1-1)
-- [1.2 期望、方差与条件期望](#s1-2)
-- [1.3 采样估计与蒙特卡洛方法](#s1-3)
-- [1.4 信息论基础](#s1-4)
-- [1.5 Jensen 不等式与常用不等式](#s1-5)
-- [1.6 优化基础](#s1-6)
-- [1.7 随机梯度下降与 Adam 优化器](#s1-7)
-- [1.8 似然比技巧（Likelihood Ratio Trick）](#s1-8)
-- [1.9 本章小结与自测](#s1-9)
+- [1.1 随机变量与概率分布](#user-content-s1-1)
+- [1.2 期望、方差与条件期望](#user-content-s1-2)
+- [1.3 采样估计与蒙特卡洛方法](#user-content-s1-3)
+- [1.4 信息论基础](#user-content-s1-4)
+- [1.5 Jensen 不等式与常用不等式](#user-content-s1-5)
+- [1.6 优化基础](#user-content-s1-6)
+- [1.7 随机梯度下降与 Adam 优化器](#user-content-s1-7)
+- [1.8 似然比技巧（Likelihood Ratio Trick）](#user-content-s1-8)
+- [1.9 本章小结与自测](#user-content-s1-9)
 
 本章为后续 PPO（Proximal Policy Optimization，近端策略优化）算法的推导建立必要的数学工具。我们不追求泛泛的数学复习，而是精准地铺设 PPO 及其前置理论（策略梯度、TRPO、自然梯度）所依赖的每一块基石。每个定义和定理都会说明它在强化学习中的具体用途，避免"学了不知道干什么"的感觉。
 
@@ -42,15 +42,15 @@
 
 对于两个随机变量 $`X, Y`$，联合分布 $`p(x, y)`$ 描述它们同时取特定值的概率。条件分布定义为：
 
-$$
+```math
 p(y|x) = \frac{p(x, y)}{p(x)}, \quad \text{当 } p(x) > 0
-$$
+```
 
 边缘分布通过对另一个变量求和（离散）或积分（连续）得到：
 
-$$
+```math
 p(x) = \sum_y p(x, y) \quad \text{或} \quad p(x) = \int p(x, y)\,dy
-$$
+```
 
 这三个概念的关系即贝叶斯公式的基础：$`p(x, y) = p(y|x)\,p(x) = p(x|y)\,p(y)`$。在 RL 中，轨迹的概率分解正是反复应用这一链式法则的结果——一条轨迹 $`(s_0, a_0, s_1, a_1, \dots)`$ 的联合概率被拆分为初始状态分布、策略条件和环境转移条件的乘积。
 
@@ -60,21 +60,21 @@ $$
 
 Categorical 分布（也称多项分布的单次试验特例）是离散动作空间中最常用的策略分布。设动作空间大小为 $`K`$，策略网络输出一个 $`K`$ 维向量 $`\boldsymbol{z} = (z_1, \dots, z_K)`$，称为 logits（未归一化的对数分数）。通过 softmax 函数将其转化为合法概率：
 
-$$
+```math
 \pi(a=k|\boldsymbol{z}) = \frac{\exp(z_k)}{\sum_{j=1}^{K} \exp(z_j)}, \quad k = 1, \dots, K
-$$
+```
 
 **为什么用 logits 而非直接输出概率？** 因为 softmax 将无约束的 $`\mathbb{R}^K`$ 映射到概率单纯形，使网络输出无需额外约束即可保证合法性。更重要的是，softmax 关于 logits 的梯度有简洁形式。记 $`\pi_k = \pi(a=k|\boldsymbol{z})`$，则：
 
-$$
+```math
 \frac{\partial \pi_k}{\partial z_j} = \pi_k (\delta_{kj} - \pi_j)
-$$
+```
 
 其中 $`\delta_{kj}`$ 是 Kronecker delta。这个结果在对策略梯度做反向传播时直接出现。此外，$`\log \pi_k = z_k - \log \sum_j \exp(z_j)`$，其对 $`z_j`$ 的梯度为：
 
-$$
+```math
 \frac{\partial \log \pi_k}{\partial z_j} = \delta_{kj} - \pi_j
-$$
+```
 
 这正是策略梯度定理中 $`\nabla_{\boldsymbol{\theta}} \log \pi(a|s)`$ 的具体形式（见第 3 章）。注意该梯度只依赖于 $`\pi`$ 本身，不显式涉及 $`z`$，数值稳定性好。
 
@@ -84,17 +84,17 @@ $$
 
 当动作空间为 $`\mathbb{R}^d`$ 时，最常用的策略分布是对角多元高斯分布（diagonal multivariate Gaussian）。其 PDF 为：
 
-$$
+```math
 \pi(\boldsymbol{a}|\boldsymbol{s}) = \prod_{i=1}^{d} \frac{1}{\sqrt{2\pi}\sigma_i} \exp\!\left(-\frac{(a_i - \mu_i)^2}{2\sigma_i^2}\right)
-$$
+```
 
 其中均值向量 $`\boldsymbol{\mu} = (\mu_1, \dots, \mu_d)`$ 和对数标准差向量 $`\log \boldsymbol{\sigma} = (\log \sigma_1, \dots, \log \sigma_d)`$ 均由策略网络输出。
 
 **为什么参数化 $`\log \sigma`$ 而非 $`\sigma`$？** 标准差必须为正，而神经网络输出是无约束实数。若直接输出 $`\sigma`$，需加 softplus 或 exp 变换来保证正性，这会引入额外的非线性并可能导致梯度消失。使用 $`\log \sigma`$ 作为参数，$`\sigma = \exp(\log \sigma)`$ 自动为正，且对数似然关于 $`\log \sigma`$ 的梯度形式更干净：
 
-$$
+```math
 \log \pi(\boldsymbol{a}|\boldsymbol{s}) = -\frac{d}{2}\log(2\pi) - \sum_{i=1}^{d} \log \sigma_i - \sum_{i=1}^{d} \frac{(a_i - \mu_i)^2}{2\sigma_i^2}
-$$
+```
 
 对 $`\mu_i`$ 求导得 $`\frac{\partial \log \pi}{\partial \mu_i} = \frac{a_i - \mu_i}{\sigma_i^2}`$，对 $`\log \sigma_i`$ 求导得 $`\frac{\partial \log \pi}{\partial \log \sigma_i} = -1 + \frac{(a_i - \mu_i)^2}{\sigma_i^2}`$。这些表达式在实现连续动作空间的策略梯度时直接使用。
 
@@ -112,9 +112,9 @@ $$
 
 期望的核心性质是**线性性**：对任意常数 $`a, b`$ 和函数 $`f, g`$，
 
-$$
+```math
 \mathbb{E}[a f(X) + b g(Y)] = a\,\mathbb{E}[f(X)] + b\,\mathbb{E}[g(Y)]
-$$
+```
 
 这一性质不要求 $`X, Y`$ 独立，是后续所有期望运算的基础。特别地，在策略梯度推导中，我们需要将 $`\mathbb{E}[\sum_t \nabla \log \pi \cdot r_t]`$ 拆分为各项之和，线性性是这一步成立的唯一依据。
 
@@ -126,9 +126,9 @@ $$
 
 **方差的可加性**仅在变量不相关时成立：若 $`\mathrm{Cov}(X_i, X_j) = 0`$ 对所有 $`i \neq j`$，则 $`\mathrm{Var}(\sum_i X_i) = \sum_i \mathrm{Var}(X_i)`$。一般情况下：
 
-$$
+```math
 \mathrm{Var}\!\left(\sum_{i=1}^{n} X_i\right) = \sum_{i=1}^{n} \mathrm{Var}(X_i) + 2\sum_{i<j} \mathrm{Cov}(X_i, X_j)
-$$
+```
 
 在 RL 中，回报 $`G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k}`$ 的各项之间高度相关（因为共享未来的随机性），因此回报的方差远大于各项方差之和。这是理解「为什么回报估计噪声大」以及「为什么需要基线函数减方差」（见第 3 章）的关键背景。
 
@@ -140,17 +140,17 @@ $$
 
 **塔性质（Law of Total Expectation）**：
 
-$$
+```math
 \mathbb{E}[Y] = \mathbb{E}_X[\mathbb{E}[Y|X]]
-$$
+```
 
 即先对 $`Y`$ 在给定 $`X`$ 下求条件期望，再对 $`X`$ 求边际期望，等于直接对 $`Y`$ 求期望。这个性质在 RL 中无处不在：贝尔曼方程本质上就是塔性质的应用——将未来回报的期望分解为当前奖励加上下一状态价值的期望（见第 2 章）。
 
 **条件方差的分解**（Law of Total Variance）也值得记住：
 
-$$
+```math
 \mathrm{Var}(Y) = \mathbb{E}_X[\mathrm{Var}(Y|X)] + \mathrm{Var}_X(\mathbb{E}[Y|X])
-$$
+```
 
 它说明总方差可以分解为「组内方差」和「组间方差」。在分析 TD 学习与蒙特卡洛方法的方差差异时，这个分解提供了精确的解释框架。
 
@@ -176,9 +176,9 @@ $$
 
 策略梯度的核心困难在于：目标函数 $`J(\boldsymbol{\theta}) = \mathbb{E}_{\tau \sim p_{\boldsymbol{\theta}}}[R(\tau)]`$ 的期望是对 $`\boldsymbol{\theta}`$ 相关的分布取的，不能直接对 $`\boldsymbol{\theta}`$ 求导后交换期望与微分的顺序（因为分布本身依赖 $`\boldsymbol{\theta}`$）。似然比技巧（1.7 节）解决了这个问题，但其结果是另一个期望，仍然无法解析计算。采样估计提供了最终的数值解法：用有限条轨迹的经验平均代替理论期望。整个链条是：
 
-$$
+```math
 \nabla_{\boldsymbol{\theta}} J(\boldsymbol{\theta}) = \mathbb{E}_{\tau \sim p_{\boldsymbol{\theta}}}[R(\tau) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(\tau)] \approx \frac{1}{N}\sum_{i=1}^{N} R(\tau_i) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(\tau_i)
-$$
+```
 
 左边的等号来自似然比技巧，右边的近似来自蒙特卡洛估计。两者缺一不可。
 
@@ -192,9 +192,9 @@ $$
 
 离散分布 $`p`$ 的香农熵（Shannon entropy）定义为：
 
-$$
+```math
 H(p) = -\sum_x p(x) \log p(x) = \mathbb{E}_{x \sim p}[-\log p(x)]
-$$
+```
 
 连续分布对应微分熵（differential entropy），形式类似但用积分替代求和，且不再具有非负性等离散熵的部分性质。
 
@@ -208,9 +208,9 @@ $$
 
 分布 $`p`$ 相对于 $`q`$ 的交叉熵（cross-entropy）定义为：
 
-$$
+```math
 H(p, q) = -\sum_x p(x) \log q(x) = \mathbb{E}_{x \sim p}[-\log q(x)]
-$$
+```
 
 注意期望是对 $`p`$ 取的，不是 $`q`$。交叉熵衡量的是「用 $`q`$ 编码服从 $`p`$ 的数据时的平均码长」。在机器学习中，分类任务的损失函数就是真实标签分布与模型预测分布之间的交叉熵。
 
@@ -220,17 +220,17 @@ $$
 
 KL 散度（Kullback-Leibler divergence）定义为交叉熵减去熵：
 
-$$
+```math
 D_{\mathrm{KL}}(p \| q) = H(p, q) - H(p) = \sum_x p(x) \log \frac{p(x)}{q(x)} = \mathbb{E}_{x \sim p}\!\left[\log \frac{p(x)}{q(x)}\right]
-$$
+```
 
 **定理（KL 非负性 / Gibbs 不等式）**：$`D_{\mathrm{KL}}(p \| q) \geq 0`$，等号当且仅当 $`p = q`$（几乎处处）时成立。
 
 **证明**：考虑函数 $`f(t) = -\log t`$，它是严格凸函数（$`f''(t) = 1/t^2 > 0`$ 对 $`t > 0`$）。由 Jensen 不等式（1.5 节），对凸函数 $`f`$ 有 $`f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]`$。令 $`X = q(x)/p(x)`$，期望对 $`p`$ 取：
 
-$$
+```math
 -\log \mathbb{E}_{x \sim p}\!\left[\frac{q(x)}{p(x)}\right] \leq \mathbb{E}_{x \sim p}\!\left[-\log \frac{q(x)}{p(x)}\right]
-$$
+```
 
 左边：$`\mathbb{E}_{x \sim p}[q(x)/p(x)] = \sum_x p(x) \cdot q(x)/p(x) = \sum_x q(x) = 1`$，故左边为 $`-\log 1 = 0`$。
 
@@ -260,9 +260,9 @@ KL 散度**不是**距离度量：$`D_{\mathrm{KL}}(p \| q) \neq D_{\mathrm{KL}}
 
 **定理**：设 $`f: \mathcal{D} \to \mathbb{R}`$ 是凸函数，$`X`$ 是取值于 $`\mathcal{D}`$ 的随机变量，则：
 
-$$
+```math
 f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]
-$$
+```
 
 若 $`f`$ 是严格凸函数，等号当且仅当 $`X`$ 为常数（几乎处处）时成立。若 $`f`$ 是凹函数，不等号反向。
 
@@ -301,15 +301,15 @@ Hessian 矩阵 $`\boldsymbol{H}(\boldsymbol{\theta})`$ 的元素为 $`H_{ij} = \
 
 **一阶泰勒展开**（带余项）：
 
-$$
+```math
 f(\boldsymbol{\theta} + \Delta \boldsymbol{\theta}) = f(\boldsymbol{\theta}) + \nabla f(\boldsymbol{\theta})^\top \Delta \boldsymbol{\theta} + o(\|\Delta \boldsymbol{\theta}\|)
-$$
+```
 
 **二阶泰勒展开**（带余项）：
 
-$$
+```math
 f(\boldsymbol{\theta} + \Delta \boldsymbol{\theta}) = f(\boldsymbol{\theta}) + \nabla f(\boldsymbol{\theta})^\top \Delta \boldsymbol{\theta} + \frac{1}{2} \Delta \boldsymbol{\theta}^\top \boldsymbol{H}(\boldsymbol{\theta}) \Delta \boldsymbol{\theta} + o(\|\Delta \boldsymbol{\theta}\|^2)
-$$
+```
 
 这里 $`o(\|\Delta \boldsymbol{\theta}\|^k)`$ 表示当 $`\|\Delta \boldsymbol{\theta}\| \to 0`$ 时比 $`\|\Delta \boldsymbol{\theta}\|^k`$ 更快趋于零的量。
 
@@ -341,13 +341,13 @@ $$
 
 Adam（Adaptive Moment Estimation）结合了动量和自适应学习率。维护两个指数移动平均：
 
-$$
+```math
 \boldsymbol{m}_t = \beta_1 \boldsymbol{m}_{t-1} + (1 - \beta_1) \boldsymbol{g}_t \quad \text{（一阶矩估计，即梯度的 EMA）}
-$$
+```
 
-$$
+```math
 \boldsymbol{v}_t = \beta_2 \boldsymbol{v}_{t-1} + (1 - \beta_2) \boldsymbol{g}_t^2 \quad \text{（二阶矩估计，即梯度平方的 EMA）}
-$$
+```
 
 偏差修正后：$`\hat{\boldsymbol{m}}_t = \boldsymbol{m}_t / (1 - \beta_1^t)`$，$`\hat{\boldsymbol{v}}_t = \boldsymbol{v}_t / (1 - \beta_2^t)`$。
 
@@ -375,27 +375,27 @@ $$
 
 **命题**：设 $`p_{\boldsymbol{\theta}}(x)`$ 是关于参数 $`\boldsymbol{\theta}`$ 可微的概率分布族，且满足正则条件（支撑集不依赖 $`\boldsymbol{\theta}`$，可在积分号下求导），则：
 
-$$
+```math
 \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[\nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)] = \boldsymbol{0}
-$$
+```
 
 **证明**：由 $`\int p_{\boldsymbol{\theta}}(x)\,dx = 1`$ 两边对 $`\boldsymbol{\theta}`$ 求导：
 
-$$
+```math
 \nabla_{\boldsymbol{\theta}} \int p_{\boldsymbol{\theta}}(x)\,dx = \nabla_{\boldsymbol{\theta}} 1 = \boldsymbol{0}
-$$
+```
 
 在正则条件下交换微分与积分：
 
-$$
+```math
 \int \nabla_{\boldsymbol{\theta}} p_{\boldsymbol{\theta}}(x)\,dx = \boldsymbol{0}
-$$
+```
 
 利用恒等式 $`\nabla_{\boldsymbol{\theta}} p_{\boldsymbol{\theta}}(x) = p_{\boldsymbol{\theta}}(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)`$（这是链式法则的直接结果：$`\nabla \log p = (\nabla p) / p`$），代入得：
 
-$$
+```math
 \int p_{\boldsymbol{\theta}}(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)\,dx = \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[\nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)] = \boldsymbol{0}
-$$
+```
 
 $`\blacksquare`$
 
@@ -407,27 +407,27 @@ $`\blacksquare`$
 
 **定理（似然比技巧 / Log-derivative trick）**：在同样的正则条件下，对任意与 $`\boldsymbol{\theta}`$ 无关的函数 $`f(x)`$：
 
-$$
+```math
 \nabla_{\boldsymbol{\theta}} \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[f(x)] = \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[f(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)]
-$$
+```
 
 **证明**：展开期望的定义：
 
-$$
+```math
 \nabla_{\boldsymbol{\theta}} \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[f(x)] = \nabla_{\boldsymbol{\theta}} \int f(x) p_{\boldsymbol{\theta}}(x)\,dx
-$$
+```
 
 $`f(x)`$ 不依赖 $`\boldsymbol{\theta}`$，故可移入梯度算子内部（再次交换微分与积分）：
 
-$$
+```math
 = \int f(x) \nabla_{\boldsymbol{\theta}} p_{\boldsymbol{\theta}}(x)\,dx
-$$
+```
 
 代入 $`\nabla_{\boldsymbol{\theta}} p_{\boldsymbol{\theta}}(x) = p_{\boldsymbol{\theta}}(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)`$：
 
-$$
+```math
 = \int f(x) p_{\boldsymbol{\theta}}(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)\,dx = \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[f(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)]
-$$
+```
 
 $`\blacksquare`$
 
@@ -451,15 +451,15 @@ $`\blacksquare`$
 
 得分函数的协方差矩阵定义为 **Fisher 信息矩阵（Fisher Information Matrix, FIM）**：
 
-$$
+```math
 \boldsymbol{F}(\boldsymbol{\theta}) = \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[\nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x) \, \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)^\top]
-$$
+```
 
 由于得分函数均值为零（1.8.1 节），这就是其二阶矩矩阵。Fisher 信息矩阵也可以写成 KL 散度的 Hessian：
 
-$$
+```math
 \boldsymbol{F}(\boldsymbol{\theta}) = \nabla_{\boldsymbol{\theta}} \nabla_{\boldsymbol{\theta}'} D_{\mathrm{KL}}(p_{\boldsymbol{\theta}} \| p_{\boldsymbol{\theta}'}) \big|_{\boldsymbol{\theta}' = \boldsymbol{\theta}}
-$$
+```
 
 这个关系揭示了 Fisher 信息的几何含义：它度量了参数空间中分布族的局部曲率。在 $`\boldsymbol{\theta}`$ 附近，KL 散度的二阶近似为 $`D_{\mathrm{KL}}(p_{\boldsymbol{\theta}} \| p_{\boldsymbol{\theta} + \Delta \boldsymbol{\theta}}) \approx \frac{1}{2} \Delta \boldsymbol{\theta}^\top \boldsymbol{F}(\boldsymbol{\theta}) \Delta \boldsymbol{\theta}`$。
 

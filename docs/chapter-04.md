@@ -8,14 +8,14 @@
 
 **本章目录**
 
-- [4.1 本章起点：从策略梯度到优势估计器](#s4-1)
-- [4.2 k-step 优势估计器的定义与推导](#s4-2)
-- [4.3 偏差-方差的量化分析](#s4-3)
-- [4.4 TD($`\lambda`$) 回顾：$`\lambda`$-return 与资格迹](#s4-4)
-- [4.5 广义优势估计（GAE）的完整推导](#s4-5)
-- [4.6 递推实现形式与实践处理](#s4-6)
-- [4.7 实践中的数学处理与 GAE 和 PPO 的关系](#s4-7)
-- [4.8 本章小结与自测](#s4-8)
+- [4.1 本章起点：从策略梯度到优势估计器](#user-content-s4-1)
+- [4.2 k-step 优势估计器的定义与推导](#user-content-s4-2)
+- [4.3 偏差-方差的量化分析](#user-content-s4-3)
+- [4.4 TD($`\lambda`$) 回顾：$`\lambda`$-return 与资格迹](#user-content-s4-4)
+- [4.5 广义优势估计（GAE）的完整推导](#user-content-s4-5)
+- [4.6 递推实现形式与实践处理](#user-content-s4-6)
+- [4.7 实践中的数学处理与 GAE 和 PPO 的关系](#user-content-s4-7)
+- [4.8 本章小结与自测](#user-content-s4-8)
 
 <a id="s4-1"></a>
 
@@ -23,15 +23,15 @@
 
 在第 3 章中，我们已经推导出策略梯度的通用估计量形式：
 
-$$
+```math
 g = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t | s_t) \cdot \hat{A}_t \right]
-$$
+```
 
 其中 $`\hat{A}_t`$ 是真实优势函数 $`A^\pi(s_t, a_t)`$ 的某种估计器。根据第 2 章的定义，真实优势函数为：
 
-$$
+```math
 A^\pi(s_t, a_t) = Q^\pi(s_t, a_t) - V^\pi(s_t)
-$$
+```
 
 它衡量的是在状态 $`s_t`$ 下采取动作 $`a_t`$ 相对于平均水平的"好坏程度"。策略梯度定理（见第 3 章）告诉我们，只要 $`\hat{A}_t`$ 是 $`A^\pi(s_t, a_t)`$ 的无偏估计，上述梯度估计就是正确的。然而在实际算法中，我们几乎从不使用无偏估计——因为无偏往往意味着极高的方差，导致训练不稳定。
 
@@ -39,9 +39,9 @@ $$
 
 为此，我们引入均方误差（Mean Squared Error, MSE）分解作为全章的分析框架。对于任意估计器 $`\hat{A}_t`$，其关于真实优势 $`A^\pi(s_t, a_t)`$ 的 MSE 可分解为：
 
-$$
+```math
 \text{MSE}(\hat{A}_t) = \mathbb{E}\left[ (\hat{A}_t - A^\pi(s_t, a_t))^2 \right] = \underbrace{\left( \mathbb{E}[\hat{A}_t] - A^\pi(s_t, a_t) \right)^2}_{\text{偏差}^2} + \underbrace{\text{Var}(\hat{A}_t)}_{\text{方差}}
-$$
+```
 
 这个分解告诉我们：一个估计器的总误差由偏差的平方与方差两部分组成。减小其中一个往往以增大另一个为代价。本章的所有推导与分析都围绕这个权衡展开。
 
@@ -55,17 +55,17 @@ $$
 
 首先回顾 TD 残差（TD residual）。设 $`V(s)`$ 是我们对价值函数的近似（通常是一个神经网络），$`\gamma \in [0, 1)`$ 是折扣因子（见第 2 章）。定义单步 TD 残差为：
 
-$$
+```math
 \delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)
-$$
+```
 
 其中 $`r_t`$ 是在时刻 $`t`$ 执行动作 $`a_t`$ 后获得的即时奖励，$`s_{t+1}`$ 是转移后的下一个状态。当 $`V = V^\pi`$（即价值函数恰好等于真实状态价值）时，由贝尔曼方程（见第 2 章）可知 $`\mathbb{E}[\delta_t^{V^\pi} | s_t, a_t] = A^\pi(s_t, a_t)`$，因此 $`\delta_t^{V^\pi}`$ 是优势的无偏估计。但在实践中 $`V \neq V^\pi`$，所以 $`\delta_t^V`$ 是有偏的。
 
 我们将 **1-step 优势估计器** 定义为：
 
-$$
+```math
 \hat{A}_t^{(1)} = \delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)
-$$
+```
 
 <a id="s4-2-2"></a>
 
@@ -73,21 +73,21 @@ $$
 
 自然地，我们可以利用两步真实奖励来减少对 bootstrap 值 $`V(s_{t+1})`$ 的依赖。定义 **2-step 优势估计器** 为：
 
-$$
+```math
 \hat{A}_t^{(2)} = r_t + \gamma r_{t+1} + \gamma^2 V(s_{t+2}) - V(s_t)
-$$
+```
 
 下面证明它等于两个 TD 残差的加权和：$`\hat{A}_t^{(2)} = \delta_t^V + \gamma \delta_{t+1}^V`$。
 
 **证明：** 将 $`\delta_t^V`$ 和 $`\delta_{t+1}^V`$ 的定义代入右边：
 
-$$
+```math
 \begin{aligned}
 \delta_t^V + \gamma \delta_{t+1}^V &= \left( r_t + \gamma V(s_{t+1}) - V(s_t) \right) + \gamma \left( r_{t+1} + \gamma V(s_{t+2}) - V(s_{t+1}) \right) \\
 &= r_t + \gamma V(s_{t+1}) - V(s_t) + \gamma r_{t+1} + \gamma^2 V(s_{t+2}) - \gamma V(s_{t+1}) \\
 &= r_t + \gamma r_{t+1} + \gamma^2 V(s_{t+2}) - V(s_t)
 \end{aligned}
-$$
+```
 
 注意中间项 $`\gamma V(s_{t+1})`$ 与 $`-\gamma V(s_{t+1})`$ 恰好抵消。这正是 $`\hat{A}_t^{(2)}`$ 的定义。证毕。
 
@@ -99,15 +99,15 @@ $$
 
 推广上述模式，定义 **k-step 优势估计器** 为：
 
-$$
+```math
 \hat{A}_t^{(k)} = \sum_{l=0}^{k-1} \gamma^l r_{t+l} + \gamma^k V(s_{t+k}) - V(s_t)
-$$
+```
 
 同时，我们有以下等价表述：
 
-$$
+```math
 \hat{A}_t^{(k)} = \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V
-$$
+```
 
 **命题：** 上述两种形式对所有正整数 $`k`$ 等价。
 
@@ -119,7 +119,7 @@ $$
 
 **归纳步骤：** 考虑 $`k+1`$ 的情形：
 
-$$
+```math
 \begin{aligned}
 \sum_{l=0}^{k} \gamma^l \delta_{t+l}^V &= \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V + \gamma^k \delta_{t+k}^V \\
 &= \hat{A}_t^{(k)} + \gamma^k \left( r_{t+k} + \gamma V(s_{t+k+1}) - V(s_{t+k}) \right) \\
@@ -127,7 +127,7 @@ $$
 &= \sum_{l=0}^{k-1} \gamma^l r_{t+l} + \gamma^k r_{t+k} + \gamma^{k+1} V(s_{t+k+1}) - V(s_t) \\
 &= \sum_{l=0}^{k} \gamma^l r_{t+l} + \gamma^{k+1} V(s_{t+k+1}) - V(s_t)
 \end{aligned}
-$$
+```
 
 同样，$`\gamma^k V(s_{t+k})`$ 与 $`-\gamma^k V(s_{t+k})`$ 抵消。这正是 $`\hat{A}_t^{(k+1)}`$ 的定义。归纳完成。
 
@@ -137,9 +137,9 @@ $$
 
 令 $`k \to \infty`$，假设 episode 无限长或适当处理终止条件，由于 $`\gamma < 1`$，$`\gamma^k V(s_{t+k}) \to 0`$（在 $`V`$ 有界的条件下），我们得到：
 
-$$
+```math
 \hat{A}_t^{(\infty)} = \sum_{l=0}^{\infty} \gamma^l r_{t+l} - V(s_t)
-$$
+```
 
 这就是 **蒙特卡洛（Monte Carlo）优势估计**。它完全使用真实回报，不依赖任何 bootstrap 值（除了作为基线的 $`V(s_t)`$），因此在 $`V`$ 准确时是无偏的，但方差最大。
 
@@ -155,53 +155,53 @@ $$
 
 **命题：** k-step 优势估计器的偏差满足：
 
-$$
+```math
 \mathbb{E}[\hat{A}_t^{(k)}] - A^\pi(s_t, a_t) = \gamma^k \, \mathbb{E}\left[ V(s_{t+k}) - V^\pi(s_{t+k}) \right]
-$$
+```
 
 其中期望是关于从 $`(s_t, a_t)`$ 出发、遵循策略 $`\pi`$ 的状态-动作轨迹取的。
 
 **推导：** 首先回忆真实优势的另一种表达。由第 2 章可知：
 
-$$
+```math
 A^\pi(s_t, a_t) = \mathbb{E}\left[ \sum_{l=0}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] - V^\pi(s_t)
-$$
+```
 
 而 k-step 估计器的期望为：
 
-$$
+```math
 \mathbb{E}[\hat{A}_t^{(k)}] = \mathbb{E}\left[ \sum_{l=0}^{k-1} \gamma^l r_{t+l} + \gamma^k V(s_{t+k}) - V(s_t) \,\middle|\, s_t, a_t \right]
-$$
+```
 
 两式相减：
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}[\hat{A}_t^{(k)}] - A^\pi(s_t, a_t) &= \mathbb{E}\left[ \sum_{l=0}^{k-1} \gamma^l r_{t+l} + \gamma^k V(s_{t+k}) \,\middle|\, s_t, a_t \right] - V(s_t) \\
 &\quad - \left( \mathbb{E}\left[ \sum_{l=0}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] - V^\pi(s_t) \right)
 \end{aligned}
-$$
+```
 
 将第一个期望拆成前 $`k`$ 项与剩余项之和：
 
-$$
+```math
 \mathbb{E}\left[ \sum_{l=0}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] = \mathbb{E}\left[ \sum_{l=0}^{k-1} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] + \mathbb{E}\left[ \sum_{l=k}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right]
-$$
+```
 
 由马尔可夫性质，$`\mathbb{E}\left[ \sum_{l=k}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] = \gamma^k \, \mathbb{E}[V^\pi(s_{t+k}) | s_t, a_t]`$。代入并整理：
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}[\hat{A}_t^{(k)}] - A^\pi(s_t, a_t) &= \gamma^k \, \mathbb{E}[V(s_{t+k}) | s_t, a_t] - \gamma^k \, \mathbb{E}[V^\pi(s_{t+k}) | s_t, a_t] - V(s_t) + V^\pi(s_t) \\
 &= \gamma^k \, \mathbb{E}[V(s_{t+k}) - V^\pi(s_{t+k}) | s_t, a_t] + \left( V^\pi(s_t) - V(s_t) \right)
 \end{aligned}
-$$
+```
 
 等等——这里多出了一项 $`V^\pi(s_t) - V(s_t)`$。这是因为我们在 $`\hat{A}_t^{(k)}`$ 中减去的是 $`V(s_t)`$ 而非 $`V^\pi(s_t)`$。如果我们把偏差定义为相对于 $`Q^\pi(s_t, a_t) - V(s_t)`$（即以当前近似 $`V(s_t)`$ 为基线），则该项消失。更精确地，当我们关注的是"用 $`\hat{A}_t^{(k)}`$ 替代 $`A^\pi`$ 引入的额外误差"时，关键的偏差来源正是 bootstrap 端点处 $`V`$ 与 $`V^\pi`$ 的差距被 $`\gamma^k`$ 缩放的部分：
 
-$$
+```math
 \text{Bias}(\hat{A}_t^{(k)}) \propto \gamma^k \, \mathbb{E}[V(s_{t+k}) - V^\pi(s_{t+k})]
-$$
+```
 
 **关键结论：** 偏差随 $`k`$ 增大而以 $`\gamma^k`$ 的速率指数衰减。当 $`k=1`$ 时偏差最大（完全依赖一步 bootstrap）；当 $`k \to \infty`$ 时偏差趋于零（蒙特卡洛估计无偏）。
 
@@ -211,9 +211,9 @@ $$
 
 方差的来源更为直观。k-step 估计器中包含 $`k`$ 个随机奖励项 $`r_t, r_{t+1}, \dots, r_{t+k-1}`$，每一项都受环境动态和策略随机性的影响。粗略地，若各步奖励的方差量级为 $`\sigma_r^2`$ 且近似独立，则：
 
-$$
+```math
 \text{Var}(\hat{A}_t^{(k)}) \approx \sum_{l=0}^{k-1} \gamma^{2l} \, \sigma_r^2 = \sigma_r^2 \cdot \frac{1 - \gamma^{2k}}{1 - \gamma^2}
-$$
+```
 
 这是一个关于 $`k`$ 单调递增的函数。当 $`k=1`$ 时方差最小（仅含一步奖励加上 bootstrap 值的噪声）；当 $`k \to \infty`$ 时方差趋于 $`\sigma_r^2 / (1 - \gamma^2)`$，达到最大值。
 
@@ -247,21 +247,21 @@ $$
 
 定义 n-step 回报为：
 
-$$
+```math
 G_t^{(n)} = \sum_{l=0}^{n-1} \gamma^l r_{t+l} + \gamma^n V(s_{t+n})
-$$
+```
 
 $`\lambda`$-return 是各 n-step 回报的指数加权平均：
 
-$$
+```math
 G_t^\lambda = (1 - \lambda) \sum_{n=1}^{\infty} \lambda^{n-1} G_t^{(n)}
-$$
+```
 
 其中 $`\lambda \in [0, 1]`$ 是衰减参数。**权重归一化验证：**
 
-$$
+```math
 (1 - \lambda) \sum_{n=1}^{\infty} \lambda^{n-1} = (1 - \lambda) \cdot \frac{1}{1 - \lambda} = 1
-$$
+```
 
 因此 $`G_t^\lambda`$ 确实是各 $`G_t^{(n)}`$ 的凸组合。当 $`\lambda = 0`$ 时，$`G_t^\lambda = G_t^{(1)}`$（纯 TD）；当 $`\lambda = 1`$ 时，$`G_t^\lambda = G_t^{(\infty)}`$（蒙特卡洛回报）。
 
@@ -287,9 +287,9 @@ $`\lambda`$-return 还有一个等价的后向视角（backward view）表述，
 
 仿照 $`\lambda`$-return 对 n-step 回报的加权方式，定义 GAE 为各 k-step 优势估计器的指数加权平均：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{k=1}^{\infty} \lambda^{k-1} \hat{A}_t^{(k)}
-$$
+```
 
 其中 $`(1-\lambda)`$ 确保权重归一化（验证同 4.4.1 节），$`\lambda \in [0, 1]`$ 是新引入的调节参数。
 
@@ -299,36 +299,36 @@ $$
 
 将 $`\hat{A}_t^{(k)} = \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V`$ 代入上式：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{k=1}^{\infty} \lambda^{k-1} \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V
-$$
+```
 
 现在需要交换两个求和的顺序。注意内层求和的条件是 $`0 \leq l \leq k-1`$，即 $`l < k`$，等价于 $`k > l`$，即 $`k \geq l+1`$。因此交换后外层对 $`l`$ 从 $`0`$ 到 $`\infty`$ 求和，内层对 $`k`$ 从 $`l+1`$ 到 $`\infty`$ 求和：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{l=0}^{\infty} \gamma^l \delta_{t+l}^V \sum_{k=l+1}^{\infty} \lambda^{k-1}
-$$
+```
 
 计算内层几何级数。令 $`m = k - 1`$，则当 $`k = l+1`$ 时 $`m = l`$，于是：
 
-$$
+```math
 \sum_{k=l+1}^{\infty} \lambda^{k-1} = \sum_{m=l}^{\infty} \lambda^m = \frac{\lambda^l}{1 - \lambda}
-$$
+```
 
 代回原式：
 
-$$
+```math
 \begin{aligned}
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} &= (1 - \lambda) \sum_{l=0}^{\infty} \gamma^l \delta_{t+l}^V \cdot \frac{\lambda^l}{1 - \lambda} \\
 &= \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}^V
 \end{aligned}
-$$
+```
 
 $`(1-\lambda)`$ 与 $`1/(1-\lambda)`$ 恰好约去。**这就是 GAE 的简洁闭式表达：**
 
-$$
+```math
 \boxed{\hat{A}_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \, \delta_{t+l}^V}
-$$
+```
 
 注意有效折扣因子变成了 $`\gamma\lambda`$ 而非 $`\gamma`$。这意味着 $`\lambda`$ 直接控制了 TD 残差累加的衰减速率：$`\lambda`$ 越小，远处的 $`\delta`$ 被压制得越快，估计越偏向短视（低方差、高偏差）；$`\lambda`$ 越大，远处的 $`\delta`$ 保留得越多，估计越偏向长远（高方差、低偏差）。
 
@@ -338,17 +338,17 @@ $$
 
 **情形 1：$`\lambda = 0`$。** 此时 $`(\gamma \lambda)^l = 0`$ 对所有 $`l \geq 1`$ 成立，仅剩 $`l=0`$ 项：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, 0)} = \delta_t^V = \hat{A}_t^{(1)}
-$$
+```
 
 退化为纯 TD 优势估计。方差最小，偏差最大，完全依赖 critic 的质量。
 
 **情形 2：$`\lambda = 1`$。** 此时 $`(\gamma \lambda)^l = \gamma^l`$：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, 1)} = \sum_{l=0}^{\infty} \gamma^l \delta_{t+l}^V = \hat{A}_t^{(\infty)} = \sum_{l=0}^{\infty} \gamma^l r_{t+l} - V(s_t)
-$$
+```
 
 退化为蒙特卡洛优势估计。无偏（当 $`V(s_t)`$ 准确时），方差最大，critic 仅作为基线减少方差。
 
@@ -373,19 +373,19 @@ $$
 
 GAE 的级数形式 $`\hat{A}_t = \sum_{l=0}^{\infty} (\gamma\lambda)^l \delta_{t+l}^V`$ 虽然数学上优美，但不适合直接计算。将其改写为递推形式：
 
-$$
+```math
 \begin{aligned}
 \hat{A}_t &= \delta_t^V + (\gamma\lambda) \delta_{t+1}^V + (\gamma\lambda)^2 \delta_{t+2}^V + \cdots \\
 &= \delta_t^V + \gamma\lambda \left( \delta_{t+1}^V + (\gamma\lambda) \delta_{t+2}^V + \cdots \right) \\
 &= \delta_t^V + \gamma\lambda \, \hat{A}_{t+1}
 \end{aligned}
-$$
+```
 
 即：
 
-$$
+```math
 \boxed{\hat{A}_t = \delta_t^V + \gamma\lambda \, \hat{A}_{t+1}}
-$$
+```
 
 这个递推关系意味着我们可以**从后向前**遍历一次 rollout 来计算所有时间步的优势估计。具体地，对于一个长度为 $`T`$ 的 rollout，我们从 $`t = T-1`$ 开始，设 $`\hat{A}_T = 0`$（episode 边界条件，详见下文），然后依次计算 $`\hat{A}_{T-1}, \hat{A}_{T-2}, \dots, \hat{A}_0`$。每一步只需常数时间，总体复杂度为 $`O(T)`$。
 
@@ -395,9 +395,9 @@ $$
 
 有了优势估计 $`\hat{A}_t`$，我们可以自然地为 critic 网络构造回归目标。由于 $`\hat{A}_t \approx Q^\pi(s_t, a_t) - V(s_t)`$，可得：
 
-$$
+```math
 V_t^{\text{target}} = \hat{A}_t + V(s_t)
-$$
+```
 
 这被称为 $`\lambda`$-return 目标（因为它等价于用 $`\lambda`$-return 作为 $`V(s_t)`$ 的训练目标）。在实践中，我们用 $`V_t^{\text{target}}`$ 作为 critic 网络的监督信号，通过最小化 $`(V_\phi(s_t) - V_t^{\text{target}})^2`$ 来更新 critic 参数 $`\phi`$。
 
@@ -428,9 +428,9 @@ $$
 
 在实践中，计算完 $`\hat{A}_t`$ 后通常会对其进行归一化：
 
-$$
+```math
 \tilde{A}_t = \frac{\hat{A}_t - \mu_A}{\sigma_A}
-$$
+```
 
 其中 $`\mu_A`$ 和 $`\sigma_A`$ 是当前 mini-batch 内所有 $`\hat{A}_t`$ 的均值和标准差。这一步的作用有三：
 
@@ -446,9 +446,9 @@ $$
 
 这一点的数学本质值得再次强调。设 $`d_t \in \{0, 1\}`$ 表示时刻 $`t`$ 是否为真正终止（$`d_t = 1`$ 表示终止），则统一的 TD 残差写法为：
 
-$$
+```math
 \delta_t^V = r_t + \gamma (1 - d_t) V(s_{t+1}) - V(s_t)
-$$
+```
 
 当 $`d_t = 1`$（终止）时，$`\delta_t^V = r_t - V(s_t)`$；当 $`d_t = 0`$（正常转移或截断）时，$`\delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)`$。截断时 $`d_t = 0`$，因此仍然 bootstrap——这在数学上是正确的，因为截断并不改变 MDP 的价值函数定义，只是限制了我们的观测窗口。
 

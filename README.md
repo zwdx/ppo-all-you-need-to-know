@@ -9,8 +9,8 @@
 ## 你会沿着怎样的路线学习
 
 - **从基础推到算法**：概率论 → MDP → 策略梯度 → GAE → TRPO → PPO，每一章接着前一章的结论往下走。
-- **把关键步骤展开**：对照 [GAE 的推导](docs/chapter-04.md#s4-5) 与递推实现，拆开 [clip 与 min 的六种情形](docs/chapter-06.md#s6-2)，理解公式如何影响梯度。
-- **把理论接到代码与调试**：阅读 [PyTorch 参考实现](docs/chapter-07.md#s7-4)，再用 [训练诊断](docs/chapter-07.md#s7-6) 理解指标和排查问题。
+- **把关键步骤展开**：对照 [GAE 的推导](docs/chapter-04.md#user-content-s4-5) 与递推实现，拆开 [clip 与 min 的六种情形](docs/chapter-06.md#user-content-s6-2)，理解公式如何影响梯度。
+- **把理论接到代码与调试**：阅读 [PyTorch 参考实现](docs/chapter-07.md#user-content-s7-4)，再用 [训练诊断](docs/chapter-07.md#user-content-s7-6) 理解指标和排查问题。
 - **31 道章末练习，附参考答案**：先独立思考或手推，再展开答案检查理解；分章版默认折叠答案。
 
 ## 如何使用
@@ -28,13 +28,13 @@
 <!-- chapters:start -->
 | 章节 | 阅读入口 |
 |---|---|
-| 第 1 章 数学基础 | [分章阅读](docs/chapter-01.md) · [全文位置](PPO系统学习文档.md#chapter-1) |
-| 第 2 章 强化学习核心概念 | [分章阅读](docs/chapter-02.md) · [全文位置](PPO系统学习文档.md#chapter-2) |
-| 第 3 章 策略梯度方法 | [分章阅读](docs/chapter-03.md) · [全文位置](PPO系统学习文档.md#chapter-3) |
-| 第 4 章 优势估计与广义优势估计（GAE） | [分章阅读](docs/chapter-04.md) · [全文位置](PPO系统学习文档.md#chapter-4) |
-| 第 5 章 信任域方法与重要性采样 | [分章阅读](docs/chapter-05.md) · [全文位置](PPO系统学习文档.md#chapter-5) |
-| 第 6 章 PPO 算法本体 | [分章阅读](docs/chapter-06.md) · [全文位置](PPO系统学习文档.md#chapter-6) |
-| 第 7 章 工程实现与实践 | [分章阅读](docs/chapter-07.md) · [全文位置](PPO系统学习文档.md#chapter-7) |
+| 第 1 章 数学基础 | [分章阅读](docs/chapter-01.md) · [全文位置](PPO系统学习文档.md#user-content-chapter-1) |
+| 第 2 章 强化学习核心概念 | [分章阅读](docs/chapter-02.md) · [全文位置](PPO系统学习文档.md#user-content-chapter-2) |
+| 第 3 章 策略梯度方法 | [分章阅读](docs/chapter-03.md) · [全文位置](PPO系统学习文档.md#user-content-chapter-3) |
+| 第 4 章 优势估计与广义优势估计（GAE） | [分章阅读](docs/chapter-04.md) · [全文位置](PPO系统学习文档.md#user-content-chapter-4) |
+| 第 5 章 信任域方法与重要性采样 | [分章阅读](docs/chapter-05.md) · [全文位置](PPO系统学习文档.md#user-content-chapter-5) |
+| 第 6 章 PPO 算法本体 | [分章阅读](docs/chapter-06.md) · [全文位置](PPO系统学习文档.md#user-content-chapter-6) |
+| 第 7 章 工程实现与实践 | [分章阅读](docs/chapter-07.md) · [全文位置](PPO系统学习文档.md#user-content-chapter-7) |
 <!-- chapters:end -->
 
 ## 阅读体验

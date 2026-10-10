@@ -8,16 +8,16 @@
 
 **本章目录**
 
-- [5.1 引言：为什么需要限制策略更新幅度](#s5-1)
-- [5.2 重要性采样的严格推导](#s5-2)
-- [5.3 策略层面的重要性采样](#s5-3)
-- [5.4 性能差异引理](#s5-4)
-- [5.5 TRPO 的单调改进界](#s5-5)
-- [5.6 TRPO 的实际求解形式](#s5-6)
-- [5.7 自然梯度与 Fisher 信息矩阵](#s5-7)
-- [5.8 共轭梯度法求解自然梯度](#s5-8)
-- [5.9 TRPO 的实践代价与 PPO 的动机](#s5-9)
-- [5.10 本章小结与自测](#s5-10)
+- [5.1 引言：为什么需要限制策略更新幅度](#user-content-s5-1)
+- [5.2 重要性采样的严格推导](#user-content-s5-2)
+- [5.3 策略层面的重要性采样](#user-content-s5-3)
+- [5.4 性能差异引理](#user-content-s5-4)
+- [5.5 TRPO 的单调改进界](#user-content-s5-5)
+- [5.6 TRPO 的实际求解形式](#user-content-s5-6)
+- [5.7 自然梯度与 Fisher 信息矩阵](#user-content-s5-7)
+- [5.8 共轭梯度法求解自然梯度](#user-content-s5-8)
+- [5.9 TRPO 的实践代价与 PPO 的动机](#user-content-s5-9)
+- [5.10 本章小结与自测](#user-content-s5-10)
 
 <a id="s5-1"></a>
 
@@ -37,23 +37,23 @@
 
 设我们希望计算期望 $`\mathbb{E}_{x \sim q}[f(x)]`$，但只能从另一个分布 $`p`$ 中获取样本。假设 $`p`$ 的支撑覆盖 $`q`$ 的支撑，即对所有满足 $`q(x) > 0`$ 的 $`x`$ 都有 $`p(x) > 0`$。定义**重要性比（importance ratio）** 为：
 
-$$
+```math
 r(x) = \frac{q(x)}{p(x)}.
-$$
+```
 
 则有如下恒等式：
 
-$$
+```math
 \mathbb{E}_{x \sim p}\left[r(x) f(x)\right] = \int p(x) \cdot \frac{q(x)}{p(x)} \cdot f(x) \, dx = \int q(x) f(x) \, dx = \mathbb{E}_{x \sim q}[f(x)].
-$$
+```
 
 上述推导的关键步骤是在积分中乘除 $`q(x)/p(x)`$，然后交换测度。这要求 $`p(x) > 0`$ 在 $`q(x) > 0`$ 的所有点上成立；若存在 $`q(x) > 0`$ 但 $`p(x) = 0`$ 的点，则该点贡献被遗漏，估计量产生系统性偏差。因此在支撑条件满足时，IS 估计量是**严格无偏**的。
 
 给定 $`N`$ 个独立同分布样本 $`x_i \sim p`$，IS 估计量为：
 
-$$
+```math
 \hat{\mu}_N = \frac{1}{N} \sum_{i=1}^{N} r(x_i) f(x_i).
-$$
+```
 
 由上述恒等式，$`\mathbb{E}[\hat{\mu}_N] = \mathbb{E}_{x \sim q}[f(x)]`$，无偏性得证。
 
@@ -63,17 +63,17 @@ $$
 
 虽然 IS 估计量无偏，其方差却可能极大甚至无穷。展开方差表达式：
 
-$$
+```math
 \text{Var}_p\left[r(X)f(X)\right] = \mathbb{E}_p\left[r(X)^2 f(X)^2\right] - \left(\mathbb{E}_q[f(X)]\right)^2 = \int \frac{q(x)^2}{p(x)} f(x)^2 \, dx - \mu_q^2.
-$$
+```
 
 当 $`q/p`$ 在某些区域取值很大且 $`p`$ 在这些区域的概率密度很小时，被积函数 $`q^2/p`$ 可以发散，导致方差无界。直观地说，如果行为策略 $`p`$ 很少访问目标策略 $`q`$ 认为重要的区域，那么偶尔落入这些区域的样本将获得极大的权重 $`r(x)`$，使估计量剧烈波动。这就是**方差爆炸**问题，也是后续所有「限制策略更新幅度」方法的根本动机。
 
 实践中常用**有效样本量（Effective Sample Size, ESS）** 作为诊断指标：
 
-$$
+```math
 \text{ESS} = \frac{\left(\sum_{i=1}^{N} w_i\right)^2}{\sum_{i=1}^{N} w_i^2},
-$$
+```
 
 其中 $`w_i = r(x_i)`$ 为非归一化权重。ESS 的取值范围为 $`[1, N]`$：当所有权重相等时 $`\text{ESS} = N`$（理想情况），当权重集中于单个样本时 $`\text{ESS} \approx 1`$（退化情况）。ESS 远小于 $`N`$ 表明 IS 估计不可靠。
 
@@ -87,9 +87,9 @@ $$
 
 在强化学习中，我们希望用旧策略 $`\pi_{\theta_\text{old}}`$ 采集的轨迹来估计新策略 $`\pi_\theta`$ 的目标函数或梯度。最直接的想法是使用完整轨迹的重要性比：
 
-$$
+```math
 \rho(\tau) = \prod_{t=0}^{T-1} \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_\text{old}}(a_t|s_t)}.
-$$
+```
 
 然而这个乘积的方差随时间步 $`T`$ **指数级增长**。粗略分析如下：若每步比率 $`r_t`$ 独立且 $`\text{Var}(r_t) = \sigma^2`$，则 $`\text{Var}(\prod_t r_t) \approx (1+\sigma^2)^T - 1`$，呈指数增长。即使各步比率不完全独立，在实际 MDP 中这种指数趋势依然显著。因此轨迹级别的 IS 在 horizon 稍大时完全不可用。
 
@@ -99,15 +99,15 @@ $$
 
 幸运的是，策略梯度定理（见第 3 章）告诉我们：
 
-$$
+```math
 \nabla J(\theta) = \mathbb{E}_{s \sim d^\pi, a \sim \pi_\theta}\left[\nabla_\theta \log \pi_\theta(a|s) \cdot Q^\pi(s,a)\right].
-$$
+```
 
 注意这里的状态分布是 $`d^\pi`$，即当前策略 $`\pi_\theta`$ 自身的稳态（或折扣加权）状态分布。当我们用 $`\pi_{\theta_\text{old}}`$ 的样本来估计上式时，只需对动作采样做修正：
 
-$$
+```math
 \mathbb{E}_{s \sim d^{\pi_\text{old}}, a \sim \pi_{\theta_\text{old}}}\left[\frac{\pi_\theta(a|s)}{\pi_{\theta_\text{old}}(a|s)} \nabla_\theta \log \pi_\theta(a|s) \cdot Q^{\pi_\text{old}}(s,a)\right].
-$$
+```
 
 这里只出现了**单步比率** $`r_t(\theta) = \pi_\theta(a_t|s_t)/\pi_{\theta_\text{old}}(a_t|s_t)`$，避免了轨迹比率的指数方差。
 
@@ -123,9 +123,9 @@ $$
 
 **性能差异引理**（Kakade & Langford, 2002）给出了任意两个策略 $`\pi`$ 和 $`\pi'`$ 之间期望回报差的精确表达式：
 
-$$
+```math
 J(\pi') - J(\pi) = \mathbb{E}_{s \sim d^{\pi'}}\left[\sum_{a} \pi'(a|s) A^\pi(s,a)\right],
-$$
+```
 
 其中 $`d^{\pi'}`$ 是新策略 $`\pi'`$ 的折扣加权状态访问频率，$`A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)`$ 是旧策略 $`\pi`$ 的优势函数。
 
@@ -135,41 +135,41 @@ $$
 
 我们从回报的定义出发。记 $`G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k}`$ 为从时刻 $`t`$ 开始的折扣回报。对于策略 $`\pi'`$ 产生的轨迹，有：
 
-$$
+```math
 V^{\pi'}(s_0) = \mathbb{E}_{\tau \sim \pi'}[G_0 | s_0].
-$$
+```
 
 考虑沿 $`\pi'`$ 轨迹的 telescoping 分解。注意到：
 
-$$
+```math
 V^{\pi'}(s_t) = \mathbb{E}_{\tau \sim \pi'}[G_t | s_t],
-$$
+```
 
 因此 $`G_t - V^{\pi'}(s_t)`$ 是一个均值为零的鞅差序列。但更有用的是将 $`V^\pi`$ 而非 $`V^{\pi'}`$ 插入 telescoping：
 
-$$
+```math
 V^{\pi'}(s_0) - V^\pi(s_0) = \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty} \gamma^t \left(r_t + \gamma V^\pi(s_{t+1}) - V^\pi(s_t)\right)\right].
-$$
+```
 
 **验证此式**：展开右边求和，得到
 
-$$
+```math
 \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty} \gamma^t r_t + \sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t)\right].
-$$
+```
 
 后两项构成 telescoping 级数：$`\sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t) = -V^\pi(s_0)`$（因为 $`\lim_{T\to\infty} \gamma^T V^\pi(s_T) = 0`$，假定 $`\gamma < 1`$ 且 $`V^\pi`$ 有界）。因此右边等于 $`\mathbb{E}_{\tau \sim \pi'}[G_0] - V^\pi(s_0) = V^{\pi'}(s_0) - V^\pi(s_0)`$，恒等式成立。
 
 接下来，注意到括号内的表达式正是 TD 误差 $`\delta_t = r_t + \gamma V^\pi(s_{t+1}) - V^\pi(s_t)`$，而由第 2 章结论，$`\mathbb{E}[\delta_t | s_t, a_t] = A^\pi(s_t, a_t)`$。因此：
 
-$$
+```math
 V^{\pi'}(s_0) - V^\pi(s_0) = \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty} \gamma^t A^\pi(s_t, a_t)\right].
-$$
+```
 
 对初始状态 $`s_0 \sim \rho_0`$ 取期望，并将轨迹期望改写为状态-动作边际分布的形式：
 
-$$
+```math
 J(\pi') - J(\pi) = \sum_{t=0}^{\infty} \gamma^t \mathbb{E}_{s_t \sim d_t^{\pi'}, a_t \sim \pi'}\left[A^\pi(s_t, a_t)\right] = \mathbb{E}_{s \sim d^{\pi'}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right],
-$$
+```
 
 其中 $`d^{\pi'}(s) = (1-\gamma)\sum_{t=0}^{\infty} \gamma^t d_t^{\pi'}(s)`$ 为折扣加权状态分布（归一化为概率分布）。引理得证。
 
@@ -191,33 +191,33 @@ $$
 
 由性能差异引理：
 
-$$
+```math
 J(\pi') - J(\pi) = \mathbb{E}_{s \sim d^{\pi'}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right].
-$$
+```
 
 我们希望将其中的 $`d^{\pi'}`$ 替换为可计算的 $`d^\pi`$。为此引入替代目标：
 
-$$
+```math
 \eta(\pi') = \mathbb{E}_{s \sim d^{\pi}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right].
-$$
+```
 
 注意 $`\eta(\pi')`$ 只涉及旧策略的状态分布 $`d^\pi`$，可以用旧策略采集的样本通过重要性采样估计。定义近似目标函数：
 
-$$
+```math
 L_\pi(\pi') = J(\pi) + \eta(\pi').
-$$
+```
 
 现在量化 $`J(\pi') - L_\pi(\pi')`$ 的误差。由性能差异引理和 $`\eta`$ 的定义：
 
-$$
+```math
 J(\pi') - L_\pi(\pi') = \mathbb{E}_{s \sim d^{\pi'}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right] - \mathbb{E}_{s \sim d^{\pi}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right].
-$$
+```
 
 记 $`f(s) = \sum_a \pi'(a|s) A^\pi(s,a)`$，则误差为 $`(d^{\pi'} - d^\pi)^T f`$。Schulman et al. (2015) 证明了以下关键不等式：
 
-$$
+```math
 \left|J(\pi') - L_\pi(\pi')\right| \leq C \cdot \max_s D_\text{KL}\left(\pi'(\cdot|s) \| \pi(\cdot|s)\right),
-$$
+```
 
 其中 $`C = \frac{4\varepsilon\gamma}{(1-\gamma)^2}`$，$`\varepsilon = \max_{s,a} |A^\pi(s,a)|`$。
 
@@ -229,9 +229,9 @@ $$
 
 由上述误差界，直接得到：
 
-$$
+```math
 J(\pi') \geq L_\pi(\pi') - C \cdot \max_s D_\text{KL}\left(\pi'(\cdot|s) \| \pi(\cdot|s)\right).
-$$
+```
 
 记右端为 $`\underline{J}_\pi(\pi')`$，它是 $`J(\pi')`$ 的一个**可计算下界**。
 
@@ -257,9 +257,9 @@ $$
 
 将上述理论转化为实际算法，TRPO 求解如下约束优化：
 
-$$
+```math
 \max_\theta \quad \mathbb{E}_{s \sim d^{\pi_{\theta_\text{old}}}, a \sim \pi_{\theta_\text{old}}}\left[r_t(\theta) \cdot \hat{A}_t\right] \quad \text{s.t.} \quad \mathbb{E}_{s \sim d^{\pi_{\theta_\text{old}}}}\left[D_\text{KL}\left(\pi_{\theta_\text{old}}(\cdot|s) \| \pi_\theta(\cdot|s)\right)\right] \leq \delta,
-$$
+```
 
 其中 $`r_t(\theta) = \pi_\theta(a_t|s_t)/\pi_{\theta_\text{old}}(a_t|s_t)`$ 为单步重要性比，$`\hat{A}_t`$ 为 GAE 优势估计（见第 4 章），$`\delta`$ 为预设的 KL 阈值（通常取 0.01）。
 
@@ -291,9 +291,9 @@ $$
 
 其中 $`F(\theta)`$ 即为 **Fisher 信息矩阵**。因此：
 
-$$
+```math
 D_\text{KL}(\pi_\theta \| \pi_{\theta+\Delta\theta}) \approx \frac{1}{2} \Delta\theta^\top F(\theta) \Delta\theta.
-$$
+```
 
 这说明 Fisher 矩阵定义了参数空间中 KL 散度的**局部二次近似**，即以 Fisher 度量的二次型来衡量分布间的距离。
 
@@ -303,21 +303,21 @@ $$
 
 现在我们求解如下约束优化：在 KL 球内找到使目标增长最快的方向：
 
-$$
+```math
 \max_{\Delta\theta} \quad g^\top \Delta\theta \quad \text{s.t.} \quad \frac{1}{2} \Delta\theta^\top F \Delta\theta \leq \delta,
-$$
+```
 
 其中 $`g = \nabla_\theta J(\theta)`$ 为标准策略梯度。构造拉格朗日函数：
 
-$$
+```math
 \mathcal{L}(\Delta\theta, \lambda) = g^\top \Delta\theta - \lambda \left(\frac{1}{2} \Delta\theta^\top F \Delta\theta - \delta\right).
-$$
+```
 
 对 $`\Delta\theta`$ 求导令其为零：$`g - \lambda F \Delta\theta = 0`$，解得 $`\Delta\theta = \frac{1}{\lambda} F^{-1} g`$。代入约束的等式边界 $`\frac{1}{2}\Delta\theta^\top F \Delta\theta = \delta`$ 可确定 $`\lambda`$，但方向已经确定：
 
-$$
+```math
 \Delta\theta \propto F^{-1} g.
-$$
+```
 
 这就是**自然梯度（natural gradient）**：$`\tilde{\nabla} J(\theta) = F(\theta)^{-1} \nabla J(\theta)`$。它是在 KL 约束下使目标增长最快的方向，且与参数化选择无关（Fisher 矩阵在重参数化下协变变换，使得 $`F^{-1}g`$ 的方向不变）。
 
@@ -329,15 +329,15 @@ $$
 
 **对角 Gaussian 策略**：设 $`\pi = \mathcal{N}(\mu, \text{diag}(\sigma^2))`$，$`\pi' = \mathcal{N}(\mu', \text{diag}(\sigma'^2))`$，维度为 $`d`$，则：
 
-$$
+```math
 D_\text{KL}(\pi \| \pi') = \sum_{i=1}^{d} \left[\log\frac{\sigma'_i}{\sigma_i} + \frac{\sigma_i^2 + (\mu_i - \mu'_i)^2}{2\sigma'^2_i} - \frac{1}{2}\right].
-$$
+```
 
 **Categorical 策略**：设 $`\pi(a) = p_a`$，$`\pi'(a) = q_a`$，则：
 
-$$
+```math
 D_\text{KL}(\pi \| \pi') = \sum_a p_a \log \frac{p_a}{q_a}.
-$$
+```
 
 这两个公式均可直接微分以计算 KL 约束的梯度与 Hessian-vector product。
 
@@ -363,9 +363,9 @@ Fisher 矩阵 $`F`$ 的大小为 $`n \times n`$，其中 $`n`$ 是策略网络�
 
 $`Fv`$ 的计算利用以下恒等式。记 $`g(\theta) = \nabla_\theta J(\theta)`$，则：
 
-$$
+```math
 F(\theta) v = \nabla_\theta \left(g(\theta)^\top v\right),
-$$
+```
 
 这是因为 $`F = \mathbb{E}[\nabla \log \pi \nabla \log \pi^\top]`$ 且 $`\nabla(g^\top v) = \nabla(\mathbb{E}[\cdots]^\top v) = \mathbb{E}[\nabla(\nabla \log \pi^\top v)] = Fv`$（在 $`v`$ 与 $`\theta`$ 无关时）。实际操作中：先计算标量 $`g^\top v`$（一次前向+反向传播），再对该标量关于 $`\theta`$ 求梯度（又一次反向传播），总代价约为两次梯度计算，远低于构造 $`F`$。
 

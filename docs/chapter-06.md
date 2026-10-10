@@ -8,15 +8,15 @@
 
 **本章目录**
 
-- [6.1 PPO 的问题定位：从信任域到一阶近似](#s6-1)
-- [6.2 PPO-Clip 的完整构造](#s6-2)
-- [6.3 PPO-Penalty：自适应 KL 惩罚](#s6-3)
-- [6.4 完整的 PPO 损失函数](#s6-4)
-- [6.5 PPO 完整算法伪代码](#s6-5)
-- [6.6 PPO 的理论局限与已知问题](#s6-6)
-- [6.7 PPO 在 RLHF 中的应用](#s6-7)
-- [6.8 与其他方法的定位关系](#s6-8)
-- [6.9 本章小结与自测](#s6-9)
+- [6.1 PPO 的问题定位：从信任域到一阶近似](#user-content-s6-1)
+- [6.2 PPO-Clip 的完整构造](#user-content-s6-2)
+- [6.3 PPO-Penalty：自适应 KL 惩罚](#user-content-s6-3)
+- [6.4 完整的 PPO 损失函数](#user-content-s6-4)
+- [6.5 PPO 完整算法伪代码](#user-content-s6-5)
+- [6.6 PPO 的理论局限与已知问题](#user-content-s6-6)
+- [6.7 PPO 在 RLHF 中的应用](#user-content-s6-7)
+- [6.8 与其他方法的定位关系](#user-content-s6-8)
+- [6.9 本章小结与自测](#user-content-s6-9)
 
 <a id="s6-1"></a>
 
@@ -38,15 +38,15 @@
 
 PPO-Clip 的核心是一个经过裁剪的替代目标函数（clipped surrogate objective）。设当前策略参数为 $`\theta`$，采集数据时的旧策略参数为 $`\theta_{\text{old}}`$，定义重要性采样比率：
 
-$$
+```math
 r_t(\theta) = \frac{\pi_\theta(a_t | s_t)}{\pi_{\theta_{\text{old}}}(a_t | s_t)}
-$$
+```
 
 其中 $`(s_t, a_t)`$ 来自旧策略 $`\pi_{\theta_{\text{old}}}`$ 生成的 rollout 数据。$`\hat{A}_t`$ 是由第 4 章 GAE 方法计算得到的优势估计。PPO-Clip 的目标函数为：
 
-$$
+```math
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t, \; \text{clip}\big(r_t(\theta), 1-\varepsilon, 1+\varepsilon\big) \hat{A}_t \right) \right]
-$$
+```
 
 其中 $`\text{clip}(x, l, u) = \max(l, \min(x, u))`$ 将 $`x`$ 截断到区间 $`[l, u]`$ 内，$`\varepsilon > 0`$ 是裁剪半径（典型取值 0.1～0.3，常用 0.2）。$`\mathbb{E}_t`$ 表示对时间步 $`t`$ 在 rollout 数据上的经验平均。
 
@@ -89,9 +89,9 @@ PPO-Clip 最容易被误解的点在于其**不对称性**：它只阻止朝有�
 
 从优化角度看，$`L^{\text{CLIP}}(\theta)`$ 是真实替代目标 $`L^{\text{SURR}}(\theta) = \mathbb{E}_t[r_t(\theta)\hat{A}_t]`$ 的一个**逐点下界**：对于每个样本 $`t`$，都有
 
-$$
+```math
 \min\big(r_t(\theta)\hat{A}_t, \; \text{clip}(r_t(\theta), 1-\varepsilon, 1+\varepsilon)\hat{A}_t\big) \leq r_t(\theta)\hat{A}_t
-$$
+```
 
 因此 $`L^{\text{CLIP}}(\theta) \leq L^{\text{SURR}}(\theta)`$。最大化一个下界是安全的：如果下界提升了，真实目标至少不会更差（在局部近似成立的范围内）。这就是"悲观"的含义——我们宁可低估收益，也不愿高估后过度乐观地迈出太大一步。
 
@@ -107,15 +107,15 @@ $$
 
 当 $`\theta = \theta_{\text{old}}`$ 时，$`r_t(\theta) = 1`$，对所有 $`t`$ 成立。由于 $`1 \in [1-\varepsilon, 1+\varepsilon]`$（只要 $`\varepsilon > 0`$），clip 不生效，即 $`\text{clip}(1, 1-\varepsilon, 1+\varepsilon) = 1`$。此时两项相等：
 
-$$
+```math
 \min(1 \cdot \hat{A}_t, \; 1 \cdot \hat{A}_t) = \hat{A}_t
-$$
+```
 
 因此在 $`\theta = \theta_{\text{old}}`$ 的一个邻域内（$`r_t`$ 尚未离开 $`[1-\varepsilon, 1+\varepsilon]`$），$`L^{\text{CLIP}}(\theta)`$ 与 $`L^{\text{SURR}}(\theta)`$ 完全一致，其梯度为：
 
-$$
+```math
 \nabla_\theta L^{\text{CLIP}}(\theta)\big|_{\theta=\theta_{\text{old}}} = \mathbb{E}_t \left[ \nabla_\theta r_t(\theta)\big|_{\theta=\theta_{\text{old}}} \cdot \hat{A}_t \right] = \mathbb{E}_t \left[ \nabla_\theta \log \pi_\theta(a_t|s_t)\big|_{\theta=\theta_{\text{old}}} \cdot \hat{A}_t \right]
-$$
+```
 
 这正是第 3 章策略梯度定理给出的形式（用 $`\hat{A}_t`$ 替代 $`Q^\pi`$ 作为无偏估计）。这保证了 PPO-Clip 在更新起点处的搜索方向与策略梯度一致，clip 仅在偏离起点足够远时才介入。
 
@@ -129,9 +129,9 @@ $$
 
 PPO 的另一种变体保留了完整的替代目标形式，但将信任域约束转化为惩罚项加入目标函数：
 
-$$
+```math
 L^{\text{KLPEN}}(\theta) = \mathbb{E}_t \left[ r_t(\theta) \hat{A}_t \right] - \beta \cdot \mathbb{E}_t \left[ D_{\text{KL}}\big(\pi_{\theta_{\text{old}}}(\cdot|s_t) \;\|\; \pi_\theta(\cdot|s_t)\big) \right]
-$$
+```
 
 其中 $`\beta > 0`$ 是 KL 惩罚系数，$`D_{\text{KL}}`$ 的定义见第 1 章。与 TRPO 的区别在于：TRPO 将 KL 作为硬约束（$`\leq \delta`$），而 PPO-Penalty 将其作为软惩罚项，并通过自适应机制调节 $`\beta`$。
 
@@ -143,13 +143,13 @@ $$
 
 在每个 epoch（或每若干步）结束后，计算当前批次数据上的平均 KL 散度 $`d = \mathbb{E}_t[D_{\text{KL}}]`$，然后按如下规则更新 $`\beta`$：
 
-$$
+```math
 \beta \leftarrow \begin{cases}
 \beta / 2 & \text{if } d < d_{\text{targ}} / 1.5 \\
 \beta \times 2 & \text{if } d > d_{\text{targ}} \times 1.5 \\
 \beta & \text{otherwise}
 \end{cases}
-$$
+```
 
 其中 $`d_{\text{targ}}`$ 是目标 KL 散度，通常设为 0.01～0.02。$`\beta`$ 的初始值通常设为 1。这个规则的直觉是：如果实际 KL 远低于目标，说明约束过紧，放松惩罚以加速学习；如果实际 KL 远高于目标，说明约束过松，加强惩罚以防止过大更新。乘法因子 2 和阈值因子 1.5 提供了足够的滞后带（hysteresis），避免 $`\beta`$ 在临界值附近频繁振荡。
 
@@ -178,9 +178,9 @@ $$
 
 PPO 的实际优化目标不仅包含策略项，还包含价值函数拟合项和熵正则项。完整的单步损失为：
 
-$$
+```math
 L_t^{\text{PPO}}(\theta, \phi) = L_t^{\text{CLIP}}(\theta) - c_1 \, L_t^{\text{VF}}(\phi) + c_2 \, S[\pi_\theta](s_t)
-$$
+```
 
 其中 $`\phi`$ 是价值网络（critic）的参数，$`c_1, c_2 > 0`$ 是权重系数。下面逐项解释。
 
@@ -188,9 +188,9 @@ $$
 
 **价值函数项 $`L_t^{\text{VF}}(\phi)`$**：critic 的均方误差回归损失：
 
-$$
+```math
 L_t^{\text{VF}}(\phi) = \big(V_\phi(s_t) - V_t^{\text{target}}\big)^2
-$$
+```
 
 其中 $`V_t^{\text{target}} = \hat{A}_t + V_{\phi_{\text{old}}}(s_t)`$ 是利用第 4 章 λ-return 构造的价值目标。这里用 $`V_{\phi_{\text{old}}}`$ 而非 $`V_\phi`$ 来计算目标，是为了在 mini-batch 更新过程中保持目标的稳定性（类似于 TD 学习中的 target network 思想）。$`L^{\text{VF}}`$ 本身是要最小化的，所以在总 loss 中以正号出现（前面已有负号的策略项与之方向相反）。
 
@@ -210,9 +210,9 @@ $$
 
 PPO 原论文提到了一个价值函数裁剪（value function clipping）变体：
 
-$$
+```math
 L_t^{\text{VF,clip}}(\phi) = \max\!\left( \big(V_\phi(s_t) - V_t^{\text{target}}\big)^2, \; \big(\text{clip}(V_\phi(s_t), V_{\phi_{\text{old}}}(s_t)-\varepsilon, V_{\phi_{\text{old}}}(s_t)+\varepsilon) - V_t^{\text{target}}\big)^2 \right)
-$$
+```
 
 其动机与策略裁剪类似：限制价值网络的更新幅度，防止 critic 在某些状态下产生过大的预测跳变。注意这里用的是 $`\max`$ 而非 $`\min`$，因为价值函数损失是最小化目标，$`\max`$ 取两者中较大的损失值，相当于对价值更新施加了一个保守的上界。
 
@@ -352,9 +352,9 @@ Andrychowicz et al. (2021) 的大规模实证研究得出了一个重要结论�
 
 PPO 在 LLM 上是**逐 token** 应用的，而非逐句或逐段。对于生成序列 $`y = (y_1, y_2, \ldots, y_T)`$，给定输入 $`x`$，每一步的比率为：
 
-$$
+```math
 r_t(\theta) = \frac{\pi_\theta(y_t | x, y_{<t})}{\pi_{\theta_{\text{old}}}(y_t | x, y_{<t})}
-$$
+```
 
 其中 $`\pi_\theta(y_t | x, y_{<t})`$ 是语言模型在给定前缀条件下生成 token $`y_t`$ 的条件概率。优势 $`\hat{A}_t`$ 同样逐 token 计算，通常使用 GAE 或直接使用奖励模型的输出作为终端奖励进行反向传播。
 
@@ -366,9 +366,9 @@ RLHF 中的 PPO 包含**两个不同层面**的 KL 相关机制，这是最常�
 
 **第一个 KL：奖励塑形中的 KL 惩罚**。在计算奖励时，从奖励模型的输出中减去一个 KL 惩罚项：
 
-$$
+```math
 \tilde{r}_t = R_\phi(x, y_t, y_{<t}) - \beta_{\text{reward}} \cdot D_{\text{KL}}\big(\pi_\theta(\cdot|x,y_{<t}) \;\|\; \pi_{\text{ref}}(\cdot|x,y_{<t})\big)
-$$
+```
 
 这里的 $`\pi_{\text{ref}}`$ 是 SFT 模型，$`\beta_{\text{reward}}`$ 是奖励层面的 KL 系数。这个 KL 惩罚的作用是**防止 reward hacking**：如果没有它，策略会学会生成奖励模型打分高但实际质量差的文本（例如重复特定短语、输出退化格式），因为奖励模型只是在有限的人类偏好数据上训练的近似器，必然存在漏洞。KL 惩罚将策略锚定在 SFT 模型附近，确保生成的文本不会偏离太远。
 

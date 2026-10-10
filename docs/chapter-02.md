@@ -8,16 +8,16 @@
 
 **本章目录**
 
-- [2.1 为什么用马尔可夫决策过程建模](#s2-1)
-- [2.2 轨迹的概率表达式](#s2-2)
-- [2.3 回报与折扣因子](#s2-3)
-- [2.4 价值函数三件套](#s2-4)
-- [2.5 贝尔曼期望方程](#s2-5)
-- [2.6 贝尔曼最优方程与最优策略](#s2-6)
-- [2.7 时序差分误差](#s2-7)
-- [2.8 蒙特卡洛估计与时序差分估计的对比](#s2-8)
-- [2.9 策略的形式、分类与强化学习的根本困境](#s2-9)
-- [2.10 本章小结与自测](#s2-10)
+- [2.1 为什么用马尔可夫决策过程建模](#user-content-s2-1)
+- [2.2 轨迹的概率表达式](#user-content-s2-2)
+- [2.3 回报与折扣因子](#user-content-s2-3)
+- [2.4 价值函数三件套](#user-content-s2-4)
+- [2.5 贝尔曼期望方程](#user-content-s2-5)
+- [2.6 贝尔曼最优方程与最优策略](#user-content-s2-6)
+- [2.7 时序差分误差](#user-content-s2-7)
+- [2.8 蒙特卡洛估计与时序差分估计的对比](#user-content-s2-8)
+- [2.9 策略的形式、分类与强化学习的根本困境](#user-content-s2-9)
+- [2.10 本章小结与自测](#user-content-s2-10)
 
 <a id="s2-1"></a>
 
@@ -29,9 +29,9 @@
 
 强化学习（Reinforcement Learning, RL）研究的核心问题是：一个智能体（agent）如何在与环境（environment）的持续交互中，通过试错来最大化某种累积信号。这一交互以离散时间步 $`t = 0, 1, 2, \dots`$ 展开：在每个时间步 $`t`$，agent 观察到环境的状态（state）$`s_t`$，据此选择一个动作（action）$`a_t`$；环境接收到动作后，以某个概率转移到新状态 $`s_{t+1}`$，同时向 agent 发出一个标量奖励（reward）$`r_{t+1}`$。如此往复，形成一条无限或有限的交互序列：
 
-$$
+```math
 s_0, a_0, r_1, s_1, a_1, r_2, s_2, a_2, r_3, \dots
-$$
+```
 
 为了对这一过程进行严格的数学分析，我们需要一个形式化框架。马尔可夫决策过程（Markov Decision Process, MDP）正是这样一个框架，它将上述交互抽象为一个五元组 $`(\mathcal{S}, \mathcal{A}, P, R, \gamma)`$，下面逐一给出严格定义。
 
@@ -45,17 +45,17 @@ $$
 
 **转移概率 $`P`$**：环境的动力学模型。定义为条件概率分布
 
-$$
+```math
 P(s' \mid s, a) = \Pr(s_{t+1} = s' \mid s_t = s, a_t = a),
-$$
+```
 
 满足归一化条件 $`\sum_{s' \in \mathcal{S}} P(s' \mid s, a) = 1`$ 对所有 $`(s, a)`$ 成立。注意这里只依赖当前状态-动作对 $`(s, a)`$，不依赖更早的历史——这就是马尔可夫性质，下文详述。
 
 **奖励函数 $`R`$**：我们采用期望奖励的形式，定义为
 
-$$
+```math
 R(s, a) = \mathbb{E}[r_{t+1} \mid s_t = s, a_t = a].
-$$
+```
 
 更一般地，奖励可以是随机变量，其分布也仅由 $`(s, a)`$（或 $`(s, a, s')`$）决定。为推导简洁，本章多数地方使用期望奖励 $`R(s,a)`$；当需要区分即时奖励的随机性时，会显式写出 $`r_{t+1}`$。
 
@@ -67,9 +67,9 @@ $$
 
 MDP 的核心假设是**马尔可夫性质（Markov property）**：给定当前状态和动作，下一状态的条件分布与之前的全部历史无关。形式化地，对任意 $`t`$ 和任意历史 $`h_t = (s_0, a_0, r_1, \dots, s_t, a_t)`$，有
 
-$$
+```math
 \Pr(s_{t+1} \mid h_t) = \Pr(s_{t+1} \mid s_t, a_t) = P(s_{t+1} \mid s_t, a_t).
-$$
+```
 
 这意味着状态 $`s_t`$ 是对历史的「充分统计量」——它已经包含了预测未来所需的全部信息。在实际问题中，如果原始观测不满足马尔可夫性质（例如只能看到部分信息），则问题应被建模为部分可观测马尔可夫决策过程（Partially Observable MDP, POMDP）。处理 POMDP 的标准方法包括引入信念状态（belief state）或使用循环神经网络等记忆结构来隐式维护历史信息。不过，PPO 算法本身仍然建立在 MDP 框架之上；当应用于部分可观测环境时，通常将观测历史编码为网络的输入，使策略在「扩展状态」上近似满足马尔可夫性。这一话题超出本章范围，此处仅作提示。
 
@@ -83,9 +83,9 @@ $$
 
 一条轨迹（trajectory），也称回合（episode），是从初始状态到终止状态（或无限延续）的一段完整交互记录。记有限 horizon $`H`$ 的轨迹为
 
-$$
+```math
 \tau = (s_0, a_0, r_1, s_1, a_1, r_2, \dots, s_{H-1}, a_{H-1}, r_H).
-$$
+```
 
 对于无限 horizon，$`\tau`$ 是一个无限序列；但在实际推导中，我们通常先处理有限 horizon 再取极限，或直接利用 $`\gamma < 1`$ 保证级数收敛。
 
@@ -95,16 +95,16 @@ $$
 
 设 agent 遵循策略 $`\pi(a \mid s)`$（即 $`\Pr(a_t = a \mid s_t = s) = \pi(a \mid s)`$），环境的初始状态分布为 $`p(s_0)`$。则轨迹 $`\tau`$ 出现的联合概率为
 
-$$
+```math
 p(\tau) = p(s_0) \prod_{t=0}^{H-1} \pi(a_t \mid s_t) \, P(s_{t+1} \mid s_t, a_t).
-$$
+```
 
 这个分解的关键在于：**环境动力学项 $`P(s_{t+1} \mid s_t, a_t)`$ 与策略项 $`\pi(a_t \mid s_t)`$ 是完全可分离的**。原因如下：
 
 1. 根据链式法则，联合概率可以写成条件概率的连乘：
-   $$
+   ```math
    p(\tau) = p(s_0) \prod_{t=0}^{H-1} p(a_t \mid s_t, \text{history before } t) \cdot p(s_{t+1} \mid s_t, a_t, \text{history before } t).
-   $$
+   ```
 
 2. 由策略的定义，agent 选择动作只依赖当前状态：$`p(a_t \mid s_t, \text{history}) = \pi(a_t \mid s_t)`$。
 
@@ -122,9 +122,9 @@ $$
 
 从时间步 $`t`$ 出发的折扣回报（discounted return）定义为
 
-$$
+```math
 G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \cdots
-$$
+```
 
 其中 $`\gamma \in [0, 1)`$ 是折扣因子（discount factor）。注意下标约定：$`r_{t+1}`$ 是在时间步 $`t`$ 执行动作后、到达 $`s_{t+1}`$ 时收到的奖励。
 
@@ -135,9 +135,9 @@ $$
 $`\gamma`$ 的存在并非纯粹的数学技巧，它有至少三层含义：
 
 1. **数学收敛性**：若即时奖励有界，即 $`|r_t| \leq R_{\max}`$ 对所有 $`t`$ 成立，则
-   $$
+   ```math
    |G_t| \leq \sum_{k=0}^{\infty} \gamma^k R_{\max} = \frac{R_{\max}}{1 - \gamma}.
-   $$
+   ```
    该几何级数在 $`\gamma < 1`$ 时收敛，保证了 $`G_t`$ 是有界的。下面给出完整证明。
 
 2. **时间偏好**：$`\gamma < 1`$ 意味着未来的奖励比眼前的奖励「价值更低」。这反映了经济学中的时间偏好：今天的 1 元比明天的 1 元更有价值。$`\gamma`$ 越接近 1，agent 越「有耐心」。
@@ -152,9 +152,9 @@ $`\gamma`$ 的存在并非纯粹的数学技巧，它有至少三层含义：
 
 **证明**：由三角不等式和几何级数求和公式，
 
-$$
+```math
 |G_t| = \left| \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} \right| \leq \sum_{k=0}^{\infty} \gamma^k |r_{t+k+1}| \leq \sum_{k=0}^{\infty} \gamma^k R_{\max} = R_{\max} \sum_{k=0}^{\infty} \gamma^k = \frac{R_{\max}}{1 - \gamma}.
-$$
+```
 
 最后一步利用了 $`\gamma \in [0, 1)`$ 时几何级数 $`\sum_{k=0}^\infty \gamma^k = \frac{1}{1-\gamma}`$ 的收敛性。$`\square`$
 
@@ -174,9 +174,9 @@ $$
 
 策略 $`\pi`$ 下的状态价值函数（state value function）定义为从状态 $`s`$ 出发、此后遵循策略 $`\pi`$ 所获得的期望折扣回报：
 
-$$
+```math
 V^\pi(s) = \mathbb{E}_\pi[G_t \mid s_t = s] = \mathbb{E}_\pi\left[ \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} \;\middle|\; s_t = s \right].
-$$
+```
 
 这里 $`\mathbb{E}_\pi[\cdot]`$ 表示期望是在策略 $`\pi`$ 和环境动力学 $`P`$ 共同诱导的轨迹分布下取的。由于 MDP 的时齐性（time-homogeneity），$`V^\pi(s)`$ 不依赖于具体的时间步 $`t`$。
 
@@ -186,9 +186,9 @@ $$
 
 动作价值函数（action value function）定义为在状态 $`s`$ 下先执行动作 $`a`$、此后遵循策略 $`\pi`$ 的期望折扣回报：
 
-$$
+```math
 Q^\pi(s, a) = \mathbb{E}_\pi[G_t \mid s_t = s, a_t = a] = \mathbb{E}_\pi\left[ \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} \;\middle|\; s_t = s, a_t = a \right].
-$$
+```
 
 注意第一个动作 $`a_t = a`$ 是被指定的，不受 $`\pi`$ 控制；从 $`t+1`$ 步起才按 $`\pi`$ 行动。
 
@@ -198,9 +198,9 @@ $$
 
 优势函数（advantage function）衡量在状态 $`s`$ 下选择动作 $`a`$ 相对于「平均水平」的好坏：
 
-$$
+```math
 A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s).
-$$
+```
 
 $`A^\pi(s, a) > 0`$ 表示动作 $`a`$ 优于策略 $`\pi`$ 在该状态的平均表现；$`A^\pi(s, a) < 0`$ 则表示劣于平均。
 
@@ -212,9 +212,9 @@ $`A^\pi(s, a) > 0`$ 表示动作 $`a`$ 优于策略 $`\pi`$ 在该状态的平�
 
 **推导**：由全期望公式（law of total expectation），
 
-$$
+```math
 V^\pi(s) = \mathbb{E}_\pi[G_t \mid s_t = s] = \sum_{a \in \mathcal{A}} \pi(a \mid s) \, \mathbb{E}_\pi[G_t \mid s_t = s, a_t = a] = \sum_{a \in \mathcal{A}} \pi(a \mid s) \, Q^\pi(s, a).
-$$
+```
 
 这正是 $`Q^\pi(s, a)`$ 在策略 $`\pi(\cdot \mid s)`$ 下的期望。$`\square`$
 
@@ -222,14 +222,14 @@ $$
 
 **推导**：利用优势函数的定义和关系一，
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}_{a \sim \pi(\cdot \mid s)}[A^\pi(s, a)] &= \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ Q^\pi(s, a) - V^\pi(s) \right] \\
 &= \sum_{a \in \mathcal{A}} \pi(a \mid s) Q^\pi(s, a) - V^\pi(s) \sum_{a \in \mathcal{A}} \pi(a \mid s) \\
 &= V^\pi(s) - V^\pi(s) \cdot 1 \\
 &= 0.
 \end{aligned}
-$$
+```
 
 第二步利用了 $`\sum_a \pi(a \mid s) = 1`$。$`\square`$
 
@@ -245,15 +245,15 @@ $$
 
 折扣回报有一个天然的递归分解：
 
-$$
+```math
 G_t = r_{t+1} + \gamma G_{t+1}.
-$$
+```
 
 这是因为
 
-$$
+```math
 G_t = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \cdots = r_{t+1} + \gamma (r_{t+2} + \gamma r_{t+3} + \cdots) = r_{t+1} + \gamma G_{t+1}.
-$$
+```
 
 这一简单的恒等式是推导所有贝尔曼方程的起点。
 
@@ -263,15 +263,15 @@ $$
 
 对 $`G_t = r_{t+1} + \gamma G_{t+1}`$ 两边在 $`s_t = s`$ 条件下取期望：
 
-$$
+```math
 V^\pi(s) = \mathbb{E}_\pi[r_{t+1} + \gamma G_{t+1} \mid s_t = s].
-$$
+```
 
 展开期望：首先对 $`a_t \sim \pi(\cdot \mid s)`$ 取期望，然后对 $`s_{t+1} \sim P(\cdot \mid s, a)`$ 取期望：
 
-$$
+```math
 V^\pi(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\pi(s') \right].
-$$
+```
 
 这就是 $`V^\pi`$ 的**贝尔曼期望方程（Bellman expectation equation）**。它表达了 $`V^\pi(s)`$ 与后继状态价值之间的自洽关系。
 
@@ -281,15 +281,15 @@ $$
 
 类似地，对 $`Q^\pi(s, a)`$ 有
 
-$$
+```math
 Q^\pi(s, a) = R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) \sum_{a' \in \mathcal{A}} \pi(a' \mid s') Q^\pi(s', a').
-$$
+```
 
 或者更简洁地，利用 $`V^\pi(s') = \sum_{a'} \pi(a' \mid s') Q^\pi(s', a')`$，写成
 
-$$
+```math
 Q^\pi(s, a) = R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\pi(s').
-$$
+```
 
 <a id="s2-5-4"></a>
 
@@ -297,29 +297,29 @@ $$
 
 定义**贝尔曼期望算子** $`T^\pi : \mathbb{R}^{|\mathcal{S}|} \to \mathbb{R}^{|\mathcal{S}|}`$：
 
-$$
+```math
 (T^\pi V)(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V(s') \right].
-$$
+```
 
 则贝尔曼期望方程等价于不动点方程 $`V^\pi = T^\pi V^\pi`$。
 
 当 $`\mathcal{S}`$ 有限时，可将 $`V^\pi`$ 视为 $`|\mathcal{S}|`$ 维列向量，定义策略诱导的转移矩阵 $`P^\pi \in \mathbb{R}^{|\mathcal{S}| \times |\mathcal{S}|}`$，其元素为
 
-$$
+```math
 P^\pi(s, s') = \sum_{a \in \mathcal{A}} \pi(a \mid s) P(s' \mid s, a),
-$$
+```
 
 以及期望奖励向量 $`R^\pi \in \mathbb{R}^{|\mathcal{S}|}`$，其元素为 $`R^\pi(s) = \sum_a \pi(a \mid s) R(s, a)`$。则贝尔曼期望方程可写成紧凑的矩阵形式：
 
-$$
+```math
 V^\pi = R^\pi + \gamma P^\pi V^\pi.
-$$
+```
 
 移项得 $`(I - \gamma P^\pi) V^\pi = R^\pi`$，因此
 
-$$
+```math
 V^\pi = (I - \gamma P^\pi)^{-1} R^\pi.
-$$
+```
 
 **为什么 $`I - \gamma P^\pi`$ 可逆？** 因为 $`P^\pi`$ 是一个随机矩阵（每行元素非负且和为 1），其谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma < 1`$ 时，$`\gamma P^\pi`$ 的谱半径 $`\rho(\gamma P^\pi) < 1`$，因此 $`I - \gamma P^\pi`$ 的特征值全部不为零（具体地，其特征值为 $`1 - \gamma \lambda_i`$，其中 $`\lambda_i`$ 是 $`P^\pi`$ 的特征值，$`|\lambda_i| \leq 1`$，故 $`|1 - \gamma \lambda_i| \geq 1 - \gamma > 0`$），矩阵可逆。这也保证了 $`V^\pi`$ 是唯一确定的。
 
@@ -333,15 +333,15 @@ $$
 
 定义最优状态价值函数 $`V^*(s) = \max_\pi V^\pi(s)`$ 和最优动作价值函数 $`Q^*(s, a) = \max_\pi Q^\pi(s, a)`$。它们满足**贝尔曼最优方程（Bellman optimality equation）**：
 
-$$
+```math
 V^*(s) = \max_{a \in \mathcal{A}} \left[ R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^*(s') \right].
-$$
+```
 
 对应地，定义**贝尔曼最优算子** $`T^*`$：
 
-$$
+```math
 (T^* V)(s) = \max_{a \in \mathcal{A}} \left[ R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V(s') \right].
-$$
+```
 
 则 $`V^* = T^* V^*`$。
 
@@ -351,21 +351,21 @@ $$
 
 $`T^*`$ 是一个 $`\gamma`$-压缩映射（$`\gamma`$-contraction mapping）。具体来说，对任意两个价值函数 $`V_1, V_2 \in \mathbb{R}^{|\mathcal{S}|}`$，在无穷范数 $`\|V\|_\infty = \max_s |V(s)|`$ 下有
 
-$$
+```math
 \|T^* V_1 - T^* V_2\|_\infty \leq \gamma \|V_1 - V_2\|_\infty.
-$$
+```
 
 **证明思路**：对任意状态 $`s`$，设 $`a_1^*`$ 是 $`T^* V_1`$ 在 $`s`$ 处取 max 的动作，则
 
-$$
+```math
 (T^* V_1)(s) = R(s, a_1^*) + \gamma \sum_{s'} P(s' \mid s, a_1^*) V_1(s').
-$$
+```
 
 而 $`(T^* V_2)(s) \geq R(s, a_1^*) + \gamma \sum_{s'} P(s' \mid s, a_1^*) V_2(s')`$（因为 $`a_1^*`$ 不一定是 $`V_2`$ 的最优动作，max 给出的值不小于任何特定动作的值）。两式相减：
 
-$$
+```math
 (T^* V_1)(s) - (T^* V_2)(s) \leq \gamma \sum_{s'} P(s' \mid s, a_1^*) [V_1(s') - V_2(s')] \leq \gamma \|V_1 - V_2\|_\infty.
-$$
+```
 
 最后一步利用了 $`P(s' \mid s, a_1^*) \geq 0`$ 且 $`\sum_{s'} P(s' \mid s, a_1^*) = 1`$。交换 $`V_1, V_2`$ 的角色可得反向不等式，合起来即 $`|(T^* V_1)(s) - (T^* V_2)(s)| \leq \gamma \|V_1 - V_2\|_\infty`$ 对所有 $`s`$ 成立，取 max 即得压缩性。$`\square`$
 
@@ -387,9 +387,9 @@ $$
 
 时序差分（temporal difference, TD）误差定义为
 
-$$
+```math
 \delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t),
-$$
+```
 
 其中 $`V`$ 是当前对真实价值函数的估计。TD 误差衡量的是「一步预测」与「实际观测到的即时奖励加下一步估值」之间的差异。它是几乎所有现代强化学习算法的核心信号。
 
@@ -399,36 +399,36 @@ $$
 
 **关键命题**：当 $`V = V^\pi`$（即估值恰好等于真实状态价值）时，
 
-$$
+```math
 \mathbb{E}[\delta_t \mid s_t = s, a_t = a] = A^\pi(s, a).
-$$
+```
 
 **完整推导**：将 $`\delta_t`$ 的定义代入条件期望：
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}[\delta_t \mid s_t = s, a_t = a] &= \mathbb{E}[r_{t+1} + \gamma V^\pi(s_{t+1}) - V^\pi(s_t) \mid s_t = s, a_t = a] \\
 &= \mathbb{E}[r_{t+1} \mid s_t = s, a_t = a] + \gamma \, \mathbb{E}[V^\pi(s_{t+1}) \mid s_t = s, a_t = a] - V^\pi(s).
 \end{aligned}
-$$
+```
 
 第一项就是 $`R(s, a)`$。第二项展开为
 
-$$
+```math
 \mathbb{E}[V^\pi(s_{t+1}) \mid s_t = s, a_t = a] = \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\pi(s').
-$$
+```
 
 回忆 2.5.3 节中 $`Q^\pi`$ 的贝尔曼期望方程：
 
-$$
+```math
 Q^\pi(s, a) = R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\pi(s').
-$$
+```
 
 因此前两项之和恰好等于 $`Q^\pi(s, a)`$，于是
 
-$$
+```math
 \mathbb{E}[\delta_t \mid s_t = s, a_t = a] = Q^\pi(s, a) - V^\pi(s) = A^\pi(s, a).
-$$
+```
 
 $`\square`$
 
@@ -440,9 +440,9 @@ $`\square`$
 
 在实践中，$`V`$ 通常由神经网络参数化，不可能精确等于 $`V^\pi`$。此时 $`\mathbb{E}[\delta_t \mid s_t, a_t] = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)`$ 的期望不再等于 $`A^\pi(s_t, a_t)`$，而是包含了 $`V`$ 的近似误差。具体地，
 
-$$
+```math
 \mathbb{E}[\delta_t \mid s_t = s, a_t = a] = Q^\pi(s, a) - V(s) + \gamma \sum_{s'} P(s' \mid s, a)[V(s') - V^\pi(s')],
-$$
+```
 
 其中最后一项是 $`V`$ 在后继状态上的偏差经环境动力学传播后的结果。因此，用近似 $`V`$ 计算的 $`\delta_t`$ 是优势函数的**有偏估计**。偏差的大小取决于 $`V`$ 的拟合质量；随着训练推进、$`V \to V^\pi`$，偏差趋于零。这一偏差-方差的权衡将在第 4 章量化分析。
 

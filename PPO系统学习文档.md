@@ -3,257 +3,257 @@
 # PPO 系统学习文档
 
 <!-- toc:start -->
-[返回项目首页](README.md) · [阅读路线](#h5) · [全文通用符号约定](#h6)
+[返回项目首页](README.md) · [阅读路线](#user-content-h5) · [全文通用符号约定](#user-content-h6)
 
 ## 可点击目录
 
-- [第 1 章 数学基础](#chapter-1)
-- [第 2 章 强化学习核心概念](#chapter-2)
-- [第 3 章 策略梯度方法](#chapter-3)
-- [第 4 章 优势估计与广义优势估计（GAE）](#chapter-4)
-- [第 5 章 信任域方法与重要性采样](#chapter-5)
-- [第 6 章 PPO 算法本体](#chapter-6)
-- [第 7 章 工程实现与实践](#chapter-7)
+- [第 1 章 数学基础](#user-content-chapter-1)
+- [第 2 章 强化学习核心概念](#user-content-chapter-2)
+- [第 3 章 策略梯度方法](#user-content-chapter-3)
+- [第 4 章 优势估计与广义优势估计（GAE）](#user-content-chapter-4)
+- [第 5 章 信任域方法与重要性采样](#user-content-chapter-5)
+- [第 6 章 PPO 算法本体](#user-content-chapter-6)
+- [第 7 章 工程实现与实践](#user-content-chapter-7)
 
 <details>
 <summary>展开小节目录</summary>
 
-- [1.1 随机变量与概率分布](#s1-1)
-  - [1.1.1 概率质量函数与概率密度函数](#s1-1-1)
-  - [1.1.2 联合分布、条件分布与边缘化](#s1-1-2)
-  - [1.1.3 Categorical 分布：离散动作空间的策略](#s1-1-3)
-  - [1.1.4 对角 Gaussian 分布：连续动作空间的策略](#s1-1-4)
-- [1.2 期望、方差与条件期望](#s1-2)
-  - [1.2.1 期望的定义与线性性](#s1-2-1)
-  - [1.2.2 方差与协方差](#s1-2-2)
-  - [1.2.3 条件期望与塔性质](#s1-2-3)
-- [1.3 采样估计与蒙特卡洛方法](#s1-3)
-  - [1.3.1 样本均值估计](#s1-3-1)
-  - [1.3.2 从期望到采样的桥梁](#s1-3-2)
-- [1.4 信息论基础](#s1-4)
-  - [1.4.1 熵与最大熵性质](#s1-4-1)
-  - [1.4.2 交叉熵](#s1-4-2)
-  - [1.4.3 KL 散度：定义与非负性证明](#s1-4-3)
-  - [1.4.4 KL 散度的不对称性与前向/反向 KL](#s1-4-4)
-- [1.5 Jensen 不等式与常用不等式](#s1-5)
-  - [1.5.1 Jensen 不等式](#s1-5-1)
-  - [1.5.2 其他常用不等式](#s1-5-2)
-- [1.6 优化基础](#s1-6)
-  - [1.6.1 梯度与方向导数](#s1-6-1)
-  - [1.6.2 Hessian 矩阵与二阶泰勒展开](#s1-6-2)
-  - [1.6.3 凸函数与局部近似](#s1-6-3)
-- [1.7 随机梯度下降与 Adam 优化器](#s1-7)
-  - [1.7.1 Mini-batch 梯度的偏差与可行性](#s1-7-1)
-  - [1.7.2 Adam 优化器](#s1-7-2)
-  - [1.7.3 学习率与梯度裁剪的数学含义](#s1-7-3)
-- [1.8 似然比技巧（Likelihood Ratio Trick）](#s1-8)
-  - [1.8.1 基本恒等式：得分函数的期望为零](#s1-8-1)
-  - [1.8.2 似然比技巧的核心公式](#s1-8-2)
-  - [1.8.3 为什么这个技巧至关重要](#s1-8-3)
-  - [1.8.4 对数似然的二阶矩与 Fisher 信息](#s1-8-4)
-- [1.9 本章小结与自测](#s1-9)
-  - [要点回顾](#h47)
-  - [自测题](#h48)
-- [2.1 为什么用马尔可夫决策过程建模](#s2-1)
-  - [2.1.1 Agent-Environment 交互循环](#s2-1-1)
-  - [2.1.2 MDP 五元组的严格定义](#s2-1-2)
-  - [2.1.3 马尔可夫性质及其局限](#s2-1-3)
-- [2.2 轨迹的概率表达式](#s2-2)
-  - [2.2.1 轨迹的定义](#s2-2-1)
-  - [2.2.2 轨迹概率的连乘分解](#s2-2-2)
-- [2.3 回报与折扣因子](#s2-3)
-  - [2.3.1 折扣回报的定义](#s2-3-1)
-  - [2.3.2 折扣因子的三重解释](#s2-3-2)
-  - [2.3.3 有界性证明](#s2-3-3)
-  - [2.3.4 $`\gamma \to 1`$ 时的行为](#s2-3-4)
-- [2.4 价值函数三件套](#s2-4)
-  - [2.4.1 状态价值函数](#s2-4-1)
-  - [2.4.2 动作价值函数](#s2-4-2)
-  - [2.4.3 优势函数](#s2-4-3)
-  - [2.4.4 三者关系式的推导](#s2-4-4)
-- [2.5 贝尔曼期望方程](#s2-5)
-  - [2.5.1 从回报的递归结构出发](#s2-5-1)
-  - [2.5.2 $`V^\pi`$ 的贝尔曼期望方程](#s2-5-2)
-  - [2.5.3 $`Q^\pi`$ 的贝尔曼期望方程](#s2-5-3)
-  - [2.5.4 算子形式与矩阵形式](#s2-5-4)
-- [2.6 贝尔曼最优方程与最优策略](#s2-6)
-  - [2.6.1 最优价值函数与贝尔曼最优算子](#s2-6-1)
-  - [2.6.2 $`\gamma`$-压缩性与 Banach 不动点定理](#s2-6-2)
-  - [2.6.3 最优策略的存在性](#s2-6-3)
-- [2.7 时序差分误差](#s2-7)
-  - [2.7.1 TD 误差的定义](#s2-7-1)
-  - [2.7.2 TD 误差与优势函数的关系](#s2-7-2)
-  - [2.7.3 当 $`V \neq V^\pi`$ 时的情形](#s2-7-3)
-- [2.8 蒙特卡洛估计与时序差分估计的对比](#s2-8)
-- [2.9 策略的形式、分类与强化学习的根本困境](#s2-9)
-  - [2.9.1 随机策略与确定性策略](#s2-9-1)
-  - [2.9.2 参数化策略](#s2-9-2)
-  - [2.9.3 On-policy 与 Off-policy 的本质区别](#s2-9-3)
-  - [2.9.4 强化学习的根本困境](#s2-9-4)
-- [2.10 本章小结与自测](#s2-10)
-  - [要点回顾](#h87)
-  - [自测题](#h88)
-- [3.1 优化目标的两种等价形式](#s3-1)
-- [3.2 策略梯度定理的完整推导](#s3-2)
-  - [3.2.1 路径一：直接展开轨迹分布的梯度](#s3-2-1)
-  - [3.2.2 路径二：似然比技巧一步得到](#s3-2-2)
-  - [3.2.3 策略梯度定理的标准形式](#s3-2-3)
-- [3.3 因果性与 Reward-to-Go](#s3-3)
-  - [3.3.1 因果性定理及其证明](#s3-3-1)
-  - [3.3.2 Reward-to-Go 形式](#s3-3-2)
-- [3.4 用 Q 函数表达的策略梯度定理](#s3-4)
-- [3.5 基线理论与优势函数](#s3-5)
-  - [3.5.1 基线的无偏性证明](#s3-5-1)
-  - [3.5.2 为什么优势函数能显著降方差](#s3-5-2)
-  - [3.5.3 最优基线的推导](#s3-5-3)
-- [3.6 策略梯度的偏差-方差分解框架](#s3-6)
-- [3.7 Actor-Critic 架构](#s3-7)
-  - [3.7.1 两个网络的分工](#s3-7-1)
-  - [3.7.2 Critic 的损失函数](#s3-7-2)
-  - [3.7.3 为什么两个网络的梯度必须分开](#s3-7-3)
-  - [3.7.4 Critic 误差对 Actor 的影响](#s3-7-4)
-- [3.8 n-step 方法与 A2C/A3C](#s3-8)
-  - [3.8.1 A3C 的异步多 Worker 动机](#s3-8-1)
-  - [3.8.2 A2C：同步版本](#s3-8-2)
-  - [3.8.3 两者的等价性讨论](#s3-8-3)
-- [3.9 REINFORCE 伪代码](#s3-9)
-- [3.10 策略梯度方法的固有缺陷](#s3-10)
-  - [3.10.1 样本效率极低](#s3-10-1)
-  - [3.10.2 对步长极其敏感](#s3-10-2)
-  - [3.10.3 高方差](#s3-10-3)
-- [3.11 本章小结与自测](#s3-11)
-  - [要点回顾](#h119)
-  - [自测题](#h120)
-- [4.1 本章起点：从策略梯度到优势估计器](#s4-1)
-- [4.2 k-step 优势估计器的定义与推导](#s4-2)
-  - [4.2.1 TD 残差与 1-step 优势估计](#s4-2-1)
-  - [4.2.2 2-step 优势估计及其等价形式](#s4-2-2)
-  - [4.2.3 一般 k-step 优势估计器](#s4-2-3)
-  - [4.2.4 无穷步极限：蒙特卡洛优势估计](#s4-2-4)
-- [4.3 偏差-方差的量化分析](#s4-3)
-  - [4.3.1 偏差的来源与表达式](#s4-3-1)
-  - [4.3.2 方差的来源与量级](#s4-3-2)
-  - [4.3.3 偏差-方差权衡总结表](#s4-3-3)
-- [4.4 TD($`\lambda`$) 回顾：$`\lambda`$-return 与资格迹](#s4-4)
-  - [4.4.1 前向视角：$`\lambda`$-return](#s4-4-1)
-  - [4.4.2 后向视角与资格迹](#s4-4-2)
-- [4.5 广义优势估计（GAE）的完整推导](#s4-5)
-  - [4.5.1 动机](#s4-5-1)
-  - [4.5.2 GAE 的定义](#s4-5-2)
-  - [4.5.3 核心推导：交换求和顺序](#s4-5-3)
-  - [4.5.4 两个极端情形的验证](#s4-5-4)
-  - [4.5.5 $`\gamma`$ 与 $`\lambda`$ 的角色区分](#s4-5-5)
-- [4.6 递推实现形式与实践处理](#s4-6)
-  - [4.6.1 从无穷级数到递推公式](#s4-6-1)
-  - [4.6.2 配套的 Critic 回归目标](#s4-6-2)
-  - [4.6.3 Episode 边界处理](#s4-6-3)
-  - [4.6.4 有限 Horizon 下的等价性说明](#s4-6-4)
-- [4.7 实践中的数学处理与 GAE 和 PPO 的关系](#s4-7)
-  - [4.7.1 优势归一化](#s4-7-1)
-  - [4.7.2 截断与终止的数学区别再述](#s4-7-2)
-  - [4.7.3 GAE 与 PPO 的正交关系](#s4-7-3)
-- [4.8 本章小结与自测](#s4-8)
-  - [要点回顾](#h151)
-  - [自测题](#h152)
-- [5.1 引言：为什么需要限制策略更新幅度](#s5-1)
-- [5.2 重要性采样的严格推导](#s5-2)
-  - [5.2.1 基本恒等式与无偏性](#s5-2-1)
-  - [5.2.2 方差爆炸与有效样本量](#s5-2-2)
-- [5.3 策略层面的重要性采样](#s5-3)
-  - [5.3.1 轨迹比率与单步比率](#s5-3-1)
-  - [5.3.2 为什么单步比率就够了](#s5-3-2)
-- [5.4 性能差异引理](#s5-4)
-  - [5.4.1 引理陈述](#s5-4-1)
-  - [5.4.2 完整推导](#s5-4-2)
-  - [5.4.3 关键观察](#s5-4-3)
-- [5.5 TRPO 的单调改进界](#s5-5)
-  - [5.5.1 第一步：将 $`d^{\pi'}`$ 替换为 $`d^\pi`$ 并量化误差](#s5-5-1)
-  - [5.5.2 第二步：单调改进下界](#s5-5-2)
-  - [5.5.3 第三步：下界的关键性质与信任域的含义](#s5-5-3)
-- [5.6 TRPO 的实际求解形式](#s5-6)
-  - [5.6.1 约束优化问题](#s5-6-1)
-  - [5.6.2 从 max KL 到平均 KL 的松弛](#s5-6-2)
-- [5.7 自然梯度与 Fisher 信息矩阵](#s5-7)
-  - [5.7.1 参数空间 vs. 分布空间](#s5-7-1)
-  - [5.7.2 KL 散度的二阶展开与 Fisher 矩阵](#s5-7-2)
-  - [5.7.3 自然梯度的变分推导](#s5-7-3)
-  - [5.7.4 常用策略的解析 KL 公式](#s5-7-4)
-- [5.8 共轭梯度法求解自然梯度](#s5-8)
-  - [5.8.1 为什么不能直接求逆](#s5-8-1)
-  - [5.8.2 共轭梯度法的适用性](#s5-8-2)
-  - [5.8.3 Fisher-向量乘积的高效计算](#s5-8-3)
-  - [5.8.4 线搜索保证 KL 约束](#s5-8-4)
-- [5.9 TRPO 的实践代价与 PPO 的动机](#s5-9)
-- [5.10 本章小结与自测](#s5-10)
-  - [要点回顾](#h184)
-  - [自测题](#h185)
-- [6.1 PPO 的问题定位：从信任域到一阶近似](#s6-1)
-- [6.2 PPO-Clip 的完整构造](#s6-2)
-  - [6.2.1 目标函数的定义](#s6-2-1)
-  - [6.2.2 六种情形的完整分析](#s6-2-2)
-  - [6.2.3 悲观下界的设计哲学与不对称性](#s6-2-3)
-  - [6.2.4 梯度一致性验证](#s6-2-4)
-- [6.3 PPO-Penalty：自适应 KL 惩罚](#s6-3)
-  - [6.3.1 目标函数](#s6-3-1)
-  - [6.3.2 自适应 β 更新规则](#s6-3-2)
-  - [6.3.3 PPO-Clip 与 PPO-Penalty 的对比](#s6-3-3)
-- [6.4 完整的 PPO 损失函数](#s6-4)
-  - [6.4.1 三项损失的组合](#s6-4-1)
-  - [6.4.2 价值函数裁剪的争议](#s6-4-2)
-  - [6.4.3 Actor 与 Critic 的网络共享](#s6-4-3)
-- [6.5 PPO 完整算法伪代码](#s6-5)
-- [6.6 PPO 的理论局限与已知问题](#s6-6)
-  - [6.6.1 Clip 不保证单调改进](#s6-6-1)
-  - [6.6.2 梯度截断引入偏差](#s6-6-2)
-  - [6.6.3 工程细节的重要性](#s6-6-3)
-  - [6.6.4 状态分布不匹配](#s6-6-4)
-  - [6.6.5 后续改进方向简述](#s6-6-5)
-- [6.7 PPO 在 RLHF 中的应用](#s6-7)
-  - [6.7.1 RLHF 场景的特殊性](#s6-7-1)
-  - [6.7.2 逐 Token 的比率与优势](#s6-7-2)
-  - [6.7.3 KL 惩罚的双重角色](#s6-7-3)
-  - [6.7.4 Reward Hacking 与 Mode Collapse](#s6-7-4)
-  - [6.7.5 GRPO 对 PPO 的替代趋势](#s6-7-5)
-- [6.8 与其他方法的定位关系](#s6-8)
-- [6.9 本章小结与自测](#s6-9)
-  - [要点回顾](#h216)
-  - [自测题](#h217)
-- [7.1 环境接口与 Gymnasium](#s7-1)
-  - [7.1.1 Gymnasium API 概述](#s7-1-1)
-  - [7.1.2 terminated 与 truncated 的语义区别](#s7-1-2)
-- [7.2 向量环境（Vectorized Environments）](#s7-2)
-  - [7.2.1 为什么 PPO 必须用向量环境](#s7-2-1)
-  - [7.2.2 SyncVectorEnv 与 AsyncVectorEnv](#s7-2-2)
-  - [7.2.3 Rollout Buffer 的形状约定](#s7-2-3)
-  - [7.2.4 异步环境的自动 reset 语义](#s7-2-4)
-- [7.3 网络结构设计的数学考量](#s7-3)
-  - [7.3.1 MLP 主干配置](#s7-3-1)
-  - [7.3.2 初始化对策略梯度的特殊影响](#s7-3-2)
-  - [7.3.3 连续动作空间的对数标准差参数化](#s7-3-3)
-  - [7.3.4 Actor 与 Critic 共享主干 vs 分离主干](#s7-3-4)
-- [7.4 PPO 完整参考实现](#s7-4)
-  - [7.4.1 策略网络与价值网络](#s7-4-1)
-  - [7.4.2 Rollout 存储](#s7-4-2)
-  - [7.4.3 GAE 与 Return Target 计算](#s7-4-3)
-  - [7.4.4 Mini-batch 更新循环](#s7-4-4)
-  - [7.4.5 学习率线性衰减](#s7-4-5)
-  - [7.4.6 梯度裁剪澄清](#s7-4-6)
-- [7.5 数值稳定性与实现细节的数学解释](#s7-5)
-  - [7.5.1 对数域计算比率](#s7-5-1)
-  - [7.5.2 近似 KL 的选择](#s7-5-2)
-  - [7.5.3 优势归一化的位置](#s7-5-3)
-  - [7.5.4 价值裁剪](#s7-5-4)
-- [7.6 训练诊断指标与调参方法论](#s7-6)
-  - [7.6.1 必须监控的量及其健康范围](#s7-6-1)
-  - [7.6.2 调参优先级](#s7-6-2)
-  - [7.6.3 训练崩溃排查清单](#s7-6-3)
-  - [7.6.4 观测归一化与奖励归一化](#s7-6-4)
-- [7.7 常见坑清单](#s7-7)
-- [7.8 推荐学习资源与进阶路径](#s7-8)
-  - [7.8.1 论文清单（按阅读顺序）](#s7-8-1)
-  - [7.8.2 代码库](#s7-8-2)
-  - [7.8.3 务实的学习路径建议](#s7-8-3)
-- [7.9 本章小结与下一步](#s7-9)
+- [1.1 随机变量与概率分布](#user-content-s1-1)
+  - [1.1.1 概率质量函数与概率密度函数](#user-content-s1-1-1)
+  - [1.1.2 联合分布、条件分布与边缘化](#user-content-s1-1-2)
+  - [1.1.3 Categorical 分布：离散动作空间的策略](#user-content-s1-1-3)
+  - [1.1.4 对角 Gaussian 分布：连续动作空间的策略](#user-content-s1-1-4)
+- [1.2 期望、方差与条件期望](#user-content-s1-2)
+  - [1.2.1 期望的定义与线性性](#user-content-s1-2-1)
+  - [1.2.2 方差与协方差](#user-content-s1-2-2)
+  - [1.2.3 条件期望与塔性质](#user-content-s1-2-3)
+- [1.3 采样估计与蒙特卡洛方法](#user-content-s1-3)
+  - [1.3.1 样本均值估计](#user-content-s1-3-1)
+  - [1.3.2 从期望到采样的桥梁](#user-content-s1-3-2)
+- [1.4 信息论基础](#user-content-s1-4)
+  - [1.4.1 熵与最大熵性质](#user-content-s1-4-1)
+  - [1.4.2 交叉熵](#user-content-s1-4-2)
+  - [1.4.3 KL 散度：定义与非负性证明](#user-content-s1-4-3)
+  - [1.4.4 KL 散度的不对称性与前向/反向 KL](#user-content-s1-4-4)
+- [1.5 Jensen 不等式与常用不等式](#user-content-s1-5)
+  - [1.5.1 Jensen 不等式](#user-content-s1-5-1)
+  - [1.5.2 其他常用不等式](#user-content-s1-5-2)
+- [1.6 优化基础](#user-content-s1-6)
+  - [1.6.1 梯度与方向导数](#user-content-s1-6-1)
+  - [1.6.2 Hessian 矩阵与二阶泰勒展开](#user-content-s1-6-2)
+  - [1.6.3 凸函数与局部近似](#user-content-s1-6-3)
+- [1.7 随机梯度下降与 Adam 优化器](#user-content-s1-7)
+  - [1.7.1 Mini-batch 梯度的偏差与可行性](#user-content-s1-7-1)
+  - [1.7.2 Adam 优化器](#user-content-s1-7-2)
+  - [1.7.3 学习率与梯度裁剪的数学含义](#user-content-s1-7-3)
+- [1.8 似然比技巧（Likelihood Ratio Trick）](#user-content-s1-8)
+  - [1.8.1 基本恒等式：得分函数的期望为零](#user-content-s1-8-1)
+  - [1.8.2 似然比技巧的核心公式](#user-content-s1-8-2)
+  - [1.8.3 为什么这个技巧至关重要](#user-content-s1-8-3)
+  - [1.8.4 对数似然的二阶矩与 Fisher 信息](#user-content-s1-8-4)
+- [1.9 本章小结与自测](#user-content-s1-9)
+  - [要点回顾](#user-content-h47)
+  - [自测题](#user-content-h48)
+- [2.1 为什么用马尔可夫决策过程建模](#user-content-s2-1)
+  - [2.1.1 Agent-Environment 交互循环](#user-content-s2-1-1)
+  - [2.1.2 MDP 五元组的严格定义](#user-content-s2-1-2)
+  - [2.1.3 马尔可夫性质及其局限](#user-content-s2-1-3)
+- [2.2 轨迹的概率表达式](#user-content-s2-2)
+  - [2.2.1 轨迹的定义](#user-content-s2-2-1)
+  - [2.2.2 轨迹概率的连乘分解](#user-content-s2-2-2)
+- [2.3 回报与折扣因子](#user-content-s2-3)
+  - [2.3.1 折扣回报的定义](#user-content-s2-3-1)
+  - [2.3.2 折扣因子的三重解释](#user-content-s2-3-2)
+  - [2.3.3 有界性证明](#user-content-s2-3-3)
+  - [2.3.4 $`\gamma \to 1`$ 时的行为](#user-content-s2-3-4)
+- [2.4 价值函数三件套](#user-content-s2-4)
+  - [2.4.1 状态价值函数](#user-content-s2-4-1)
+  - [2.4.2 动作价值函数](#user-content-s2-4-2)
+  - [2.4.3 优势函数](#user-content-s2-4-3)
+  - [2.4.4 三者关系式的推导](#user-content-s2-4-4)
+- [2.5 贝尔曼期望方程](#user-content-s2-5)
+  - [2.5.1 从回报的递归结构出发](#user-content-s2-5-1)
+  - [2.5.2 $`V^\pi`$ 的贝尔曼期望方程](#user-content-s2-5-2)
+  - [2.5.3 $`Q^\pi`$ 的贝尔曼期望方程](#user-content-s2-5-3)
+  - [2.5.4 算子形式与矩阵形式](#user-content-s2-5-4)
+- [2.6 贝尔曼最优方程与最优策略](#user-content-s2-6)
+  - [2.6.1 最优价值函数与贝尔曼最优算子](#user-content-s2-6-1)
+  - [2.6.2 $`\gamma`$-压缩性与 Banach 不动点定理](#user-content-s2-6-2)
+  - [2.6.3 最优策略的存在性](#user-content-s2-6-3)
+- [2.7 时序差分误差](#user-content-s2-7)
+  - [2.7.1 TD 误差的定义](#user-content-s2-7-1)
+  - [2.7.2 TD 误差与优势函数的关系](#user-content-s2-7-2)
+  - [2.7.3 当 $`V \neq V^\pi`$ 时的情形](#user-content-s2-7-3)
+- [2.8 蒙特卡洛估计与时序差分估计的对比](#user-content-s2-8)
+- [2.9 策略的形式、分类与强化学习的根本困境](#user-content-s2-9)
+  - [2.9.1 随机策略与确定性策略](#user-content-s2-9-1)
+  - [2.9.2 参数化策略](#user-content-s2-9-2)
+  - [2.9.3 On-policy 与 Off-policy 的本质区别](#user-content-s2-9-3)
+  - [2.9.4 强化学习的根本困境](#user-content-s2-9-4)
+- [2.10 本章小结与自测](#user-content-s2-10)
+  - [要点回顾](#user-content-h87)
+  - [自测题](#user-content-h88)
+- [3.1 优化目标的两种等价形式](#user-content-s3-1)
+- [3.2 策略梯度定理的完整推导](#user-content-s3-2)
+  - [3.2.1 路径一：直接展开轨迹分布的梯度](#user-content-s3-2-1)
+  - [3.2.2 路径二：似然比技巧一步得到](#user-content-s3-2-2)
+  - [3.2.3 策略梯度定理的标准形式](#user-content-s3-2-3)
+- [3.3 因果性与 Reward-to-Go](#user-content-s3-3)
+  - [3.3.1 因果性定理及其证明](#user-content-s3-3-1)
+  - [3.3.2 Reward-to-Go 形式](#user-content-s3-3-2)
+- [3.4 用 Q 函数表达的策略梯度定理](#user-content-s3-4)
+- [3.5 基线理论与优势函数](#user-content-s3-5)
+  - [3.5.1 基线的无偏性证明](#user-content-s3-5-1)
+  - [3.5.2 为什么优势函数能显著降方差](#user-content-s3-5-2)
+  - [3.5.3 最优基线的推导](#user-content-s3-5-3)
+- [3.6 策略梯度的偏差-方差分解框架](#user-content-s3-6)
+- [3.7 Actor-Critic 架构](#user-content-s3-7)
+  - [3.7.1 两个网络的分工](#user-content-s3-7-1)
+  - [3.7.2 Critic 的损失函数](#user-content-s3-7-2)
+  - [3.7.3 为什么两个网络的梯度必须分开](#user-content-s3-7-3)
+  - [3.7.4 Critic 误差对 Actor 的影响](#user-content-s3-7-4)
+- [3.8 n-step 方法与 A2C/A3C](#user-content-s3-8)
+  - [3.8.1 A3C 的异步多 Worker 动机](#user-content-s3-8-1)
+  - [3.8.2 A2C：同步版本](#user-content-s3-8-2)
+  - [3.8.3 两者的等价性讨论](#user-content-s3-8-3)
+- [3.9 REINFORCE 伪代码](#user-content-s3-9)
+- [3.10 策略梯度方法的固有缺陷](#user-content-s3-10)
+  - [3.10.1 样本效率极低](#user-content-s3-10-1)
+  - [3.10.2 对步长极其敏感](#user-content-s3-10-2)
+  - [3.10.3 高方差](#user-content-s3-10-3)
+- [3.11 本章小结与自测](#user-content-s3-11)
+  - [要点回顾](#user-content-h119)
+  - [自测题](#user-content-h120)
+- [4.1 本章起点：从策略梯度到优势估计器](#user-content-s4-1)
+- [4.2 k-step 优势估计器的定义与推导](#user-content-s4-2)
+  - [4.2.1 TD 残差与 1-step 优势估计](#user-content-s4-2-1)
+  - [4.2.2 2-step 优势估计及其等价形式](#user-content-s4-2-2)
+  - [4.2.3 一般 k-step 优势估计器](#user-content-s4-2-3)
+  - [4.2.4 无穷步极限：蒙特卡洛优势估计](#user-content-s4-2-4)
+- [4.3 偏差-方差的量化分析](#user-content-s4-3)
+  - [4.3.1 偏差的来源与表达式](#user-content-s4-3-1)
+  - [4.3.2 方差的来源与量级](#user-content-s4-3-2)
+  - [4.3.3 偏差-方差权衡总结表](#user-content-s4-3-3)
+- [4.4 TD($`\lambda`$) 回顾：$`\lambda`$-return 与资格迹](#user-content-s4-4)
+  - [4.4.1 前向视角：$`\lambda`$-return](#user-content-s4-4-1)
+  - [4.4.2 后向视角与资格迹](#user-content-s4-4-2)
+- [4.5 广义优势估计（GAE）的完整推导](#user-content-s4-5)
+  - [4.5.1 动机](#user-content-s4-5-1)
+  - [4.5.2 GAE 的定义](#user-content-s4-5-2)
+  - [4.5.3 核心推导：交换求和顺序](#user-content-s4-5-3)
+  - [4.5.4 两个极端情形的验证](#user-content-s4-5-4)
+  - [4.5.5 $`\gamma`$ 与 $`\lambda`$ 的角色区分](#user-content-s4-5-5)
+- [4.6 递推实现形式与实践处理](#user-content-s4-6)
+  - [4.6.1 从无穷级数到递推公式](#user-content-s4-6-1)
+  - [4.6.2 配套的 Critic 回归目标](#user-content-s4-6-2)
+  - [4.6.3 Episode 边界处理](#user-content-s4-6-3)
+  - [4.6.4 有限 Horizon 下的等价性说明](#user-content-s4-6-4)
+- [4.7 实践中的数学处理与 GAE 和 PPO 的关系](#user-content-s4-7)
+  - [4.7.1 优势归一化](#user-content-s4-7-1)
+  - [4.7.2 截断与终止的数学区别再述](#user-content-s4-7-2)
+  - [4.7.3 GAE 与 PPO 的正交关系](#user-content-s4-7-3)
+- [4.8 本章小结与自测](#user-content-s4-8)
+  - [要点回顾](#user-content-h151)
+  - [自测题](#user-content-h152)
+- [5.1 引言：为什么需要限制策略更新幅度](#user-content-s5-1)
+- [5.2 重要性采样的严格推导](#user-content-s5-2)
+  - [5.2.1 基本恒等式与无偏性](#user-content-s5-2-1)
+  - [5.2.2 方差爆炸与有效样本量](#user-content-s5-2-2)
+- [5.3 策略层面的重要性采样](#user-content-s5-3)
+  - [5.3.1 轨迹比率与单步比率](#user-content-s5-3-1)
+  - [5.3.2 为什么单步比率就够了](#user-content-s5-3-2)
+- [5.4 性能差异引理](#user-content-s5-4)
+  - [5.4.1 引理陈述](#user-content-s5-4-1)
+  - [5.4.2 完整推导](#user-content-s5-4-2)
+  - [5.4.3 关键观察](#user-content-s5-4-3)
+- [5.5 TRPO 的单调改进界](#user-content-s5-5)
+  - [5.5.1 第一步：将 $`d^{\pi'}`$ 替换为 $`d^\pi`$ 并量化误差](#user-content-s5-5-1)
+  - [5.5.2 第二步：单调改进下界](#user-content-s5-5-2)
+  - [5.5.3 第三步：下界的关键性质与信任域的含义](#user-content-s5-5-3)
+- [5.6 TRPO 的实际求解形式](#user-content-s5-6)
+  - [5.6.1 约束优化问题](#user-content-s5-6-1)
+  - [5.6.2 从 max KL 到平均 KL 的松弛](#user-content-s5-6-2)
+- [5.7 自然梯度与 Fisher 信息矩阵](#user-content-s5-7)
+  - [5.7.1 参数空间 vs. 分布空间](#user-content-s5-7-1)
+  - [5.7.2 KL 散度的二阶展开与 Fisher 矩阵](#user-content-s5-7-2)
+  - [5.7.3 自然梯度的变分推导](#user-content-s5-7-3)
+  - [5.7.4 常用策略的解析 KL 公式](#user-content-s5-7-4)
+- [5.8 共轭梯度法求解自然梯度](#user-content-s5-8)
+  - [5.8.1 为什么不能直接求逆](#user-content-s5-8-1)
+  - [5.8.2 共轭梯度法的适用性](#user-content-s5-8-2)
+  - [5.8.3 Fisher-向量乘积的高效计算](#user-content-s5-8-3)
+  - [5.8.4 线搜索保证 KL 约束](#user-content-s5-8-4)
+- [5.9 TRPO 的实践代价与 PPO 的动机](#user-content-s5-9)
+- [5.10 本章小结与自测](#user-content-s5-10)
+  - [要点回顾](#user-content-h184)
+  - [自测题](#user-content-h185)
+- [6.1 PPO 的问题定位：从信任域到一阶近似](#user-content-s6-1)
+- [6.2 PPO-Clip 的完整构造](#user-content-s6-2)
+  - [6.2.1 目标函数的定义](#user-content-s6-2-1)
+  - [6.2.2 六种情形的完整分析](#user-content-s6-2-2)
+  - [6.2.3 悲观下界的设计哲学与不对称性](#user-content-s6-2-3)
+  - [6.2.4 梯度一致性验证](#user-content-s6-2-4)
+- [6.3 PPO-Penalty：自适应 KL 惩罚](#user-content-s6-3)
+  - [6.3.1 目标函数](#user-content-s6-3-1)
+  - [6.3.2 自适应 β 更新规则](#user-content-s6-3-2)
+  - [6.3.3 PPO-Clip 与 PPO-Penalty 的对比](#user-content-s6-3-3)
+- [6.4 完整的 PPO 损失函数](#user-content-s6-4)
+  - [6.4.1 三项损失的组合](#user-content-s6-4-1)
+  - [6.4.2 价值函数裁剪的争议](#user-content-s6-4-2)
+  - [6.4.3 Actor 与 Critic 的网络共享](#user-content-s6-4-3)
+- [6.5 PPO 完整算法伪代码](#user-content-s6-5)
+- [6.6 PPO 的理论局限与已知问题](#user-content-s6-6)
+  - [6.6.1 Clip 不保证单调改进](#user-content-s6-6-1)
+  - [6.6.2 梯度截断引入偏差](#user-content-s6-6-2)
+  - [6.6.3 工程细节的重要性](#user-content-s6-6-3)
+  - [6.6.4 状态分布不匹配](#user-content-s6-6-4)
+  - [6.6.5 后续改进方向简述](#user-content-s6-6-5)
+- [6.7 PPO 在 RLHF 中的应用](#user-content-s6-7)
+  - [6.7.1 RLHF 场景的特殊性](#user-content-s6-7-1)
+  - [6.7.2 逐 Token 的比率与优势](#user-content-s6-7-2)
+  - [6.7.3 KL 惩罚的双重角色](#user-content-s6-7-3)
+  - [6.7.4 Reward Hacking 与 Mode Collapse](#user-content-s6-7-4)
+  - [6.7.5 GRPO 对 PPO 的替代趋势](#user-content-s6-7-5)
+- [6.8 与其他方法的定位关系](#user-content-s6-8)
+- [6.9 本章小结与自测](#user-content-s6-9)
+  - [要点回顾](#user-content-h216)
+  - [自测题](#user-content-h217)
+- [7.1 环境接口与 Gymnasium](#user-content-s7-1)
+  - [7.1.1 Gymnasium API 概述](#user-content-s7-1-1)
+  - [7.1.2 terminated 与 truncated 的语义区别](#user-content-s7-1-2)
+- [7.2 向量环境（Vectorized Environments）](#user-content-s7-2)
+  - [7.2.1 为什么 PPO 必须用向量环境](#user-content-s7-2-1)
+  - [7.2.2 SyncVectorEnv 与 AsyncVectorEnv](#user-content-s7-2-2)
+  - [7.2.3 Rollout Buffer 的形状约定](#user-content-s7-2-3)
+  - [7.2.4 异步环境的自动 reset 语义](#user-content-s7-2-4)
+- [7.3 网络结构设计的数学考量](#user-content-s7-3)
+  - [7.3.1 MLP 主干配置](#user-content-s7-3-1)
+  - [7.3.2 初始化对策略梯度的特殊影响](#user-content-s7-3-2)
+  - [7.3.3 连续动作空间的对数标准差参数化](#user-content-s7-3-3)
+  - [7.3.4 Actor 与 Critic 共享主干 vs 分离主干](#user-content-s7-3-4)
+- [7.4 PPO 完整参考实现](#user-content-s7-4)
+  - [7.4.1 策略网络与价值网络](#user-content-s7-4-1)
+  - [7.4.2 Rollout 存储](#user-content-s7-4-2)
+  - [7.4.3 GAE 与 Return Target 计算](#user-content-s7-4-3)
+  - [7.4.4 Mini-batch 更新循环](#user-content-s7-4-4)
+  - [7.4.5 学习率线性衰减](#user-content-s7-4-5)
+  - [7.4.6 梯度裁剪澄清](#user-content-s7-4-6)
+- [7.5 数值稳定性与实现细节的数学解释](#user-content-s7-5)
+  - [7.5.1 对数域计算比率](#user-content-s7-5-1)
+  - [7.5.2 近似 KL 的选择](#user-content-s7-5-2)
+  - [7.5.3 优势归一化的位置](#user-content-s7-5-3)
+  - [7.5.4 价值裁剪](#user-content-s7-5-4)
+- [7.6 训练诊断指标与调参方法论](#user-content-s7-6)
+  - [7.6.1 必须监控的量及其健康范围](#user-content-s7-6-1)
+  - [7.6.2 调参优先级](#user-content-s7-6-2)
+  - [7.6.3 训练崩溃排查清单](#user-content-s7-6-3)
+  - [7.6.4 观测归一化与奖励归一化](#user-content-s7-6-4)
+- [7.7 常见坑清单](#user-content-s7-7)
+- [7.8 推荐学习资源与进阶路径](#user-content-s7-8)
+  - [7.8.1 论文清单（按阅读顺序）](#user-content-s7-8-1)
+  - [7.8.2 代码库](#user-content-s7-8-2)
+  - [7.8.3 务实的学习路径建议](#user-content-s7-8-3)
+- [7.9 本章小结与下一步](#user-content-s7-9)
 
 </details>
 
@@ -440,15 +440,15 @@ TRPO 的信任域要用二阶优化 + 共轭梯度，实现复杂、开销大
 
 对于两个随机变量 $`X, Y`$，联合分布 $`p(x, y)`$ 描述它们同时取特定值的概率。条件分布定义为：
 
-$$
+```math
 p(y|x) = \frac{p(x, y)}{p(x)}, \quad \text{当 } p(x) > 0
-$$
+```
 
 边缘分布通过对另一个变量求和（离散）或积分（连续）得到：
 
-$$
+```math
 p(x) = \sum_y p(x, y) \quad \text{或} \quad p(x) = \int p(x, y)\,dy
-$$
+```
 
 这三个概念的关系即贝叶斯公式的基础：$`p(x, y) = p(y|x)\,p(x) = p(x|y)\,p(y)`$。在 RL 中，轨迹的概率分解正是反复应用这一链式法则的结果——一条轨迹 $`(s_0, a_0, s_1, a_1, \dots)`$ 的联合概率被拆分为初始状态分布、策略条件和环境转移条件的乘积。
 
@@ -458,21 +458,21 @@ $$
 
 Categorical 分布（也称多项分布的单次试验特例）是离散动作空间中最常用的策略分布。设动作空间大小为 $`K`$，策略网络输出一个 $`K`$ 维向量 $`\boldsymbol{z} = (z_1, \dots, z_K)`$，称为 logits（未归一化的对数分数）。通过 softmax 函数将其转化为合法概率：
 
-$$
+```math
 \pi(a=k|\boldsymbol{z}) = \frac{\exp(z_k)}{\sum_{j=1}^{K} \exp(z_j)}, \quad k = 1, \dots, K
-$$
+```
 
 **为什么用 logits 而非直接输出概率？** 因为 softmax 将无约束的 $`\mathbb{R}^K`$ 映射到概率单纯形，使网络输出无需额外约束即可保证合法性。更重要的是，softmax 关于 logits 的梯度有简洁形式。记 $`\pi_k = \pi(a=k|\boldsymbol{z})`$，则：
 
-$$
+```math
 \frac{\partial \pi_k}{\partial z_j} = \pi_k (\delta_{kj} - \pi_j)
-$$
+```
 
 其中 $`\delta_{kj}`$ 是 Kronecker delta。这个结果在对策略梯度做反向传播时直接出现。此外，$`\log \pi_k = z_k - \log \sum_j \exp(z_j)`$，其对 $`z_j`$ 的梯度为：
 
-$$
+```math
 \frac{\partial \log \pi_k}{\partial z_j} = \delta_{kj} - \pi_j
-$$
+```
 
 这正是策略梯度定理中 $`\nabla_{\boldsymbol{\theta}} \log \pi(a|s)`$ 的具体形式（见第 3 章）。注意该梯度只依赖于 $`\pi`$ 本身，不显式涉及 $`z`$，数值稳定性好。
 
@@ -482,17 +482,17 @@ $$
 
 当动作空间为 $`\mathbb{R}^d`$ 时，最常用的策略分布是对角多元高斯分布（diagonal multivariate Gaussian）。其 PDF 为：
 
-$$
+```math
 \pi(\boldsymbol{a}|\boldsymbol{s}) = \prod_{i=1}^{d} \frac{1}{\sqrt{2\pi}\sigma_i} \exp\!\left(-\frac{(a_i - \mu_i)^2}{2\sigma_i^2}\right)
-$$
+```
 
 其中均值向量 $`\boldsymbol{\mu} = (\mu_1, \dots, \mu_d)`$ 和对数标准差向量 $`\log \boldsymbol{\sigma} = (\log \sigma_1, \dots, \log \sigma_d)`$ 均由策略网络输出。
 
 **为什么参数化 $`\log \sigma`$ 而非 $`\sigma`$？** 标准差必须为正，而神经网络输出是无约束实数。若直接输出 $`\sigma`$，需加 softplus 或 exp 变换来保证正性，这会引入额外的非线性并可能导致梯度消失。使用 $`\log \sigma`$ 作为参数，$`\sigma = \exp(\log \sigma)`$ 自动为正，且对数似然关于 $`\log \sigma`$ 的梯度形式更干净：
 
-$$
+```math
 \log \pi(\boldsymbol{a}|\boldsymbol{s}) = -\frac{d}{2}\log(2\pi) - \sum_{i=1}^{d} \log \sigma_i - \sum_{i=1}^{d} \frac{(a_i - \mu_i)^2}{2\sigma_i^2}
-$$
+```
 
 对 $`\mu_i`$ 求导得 $`\frac{\partial \log \pi}{\partial \mu_i} = \frac{a_i - \mu_i}{\sigma_i^2}`$，对 $`\log \sigma_i`$ 求导得 $`\frac{\partial \log \pi}{\partial \log \sigma_i} = -1 + \frac{(a_i - \mu_i)^2}{\sigma_i^2}`$。这些表达式在实现连续动作空间的策略梯度时直接使用。
 
@@ -510,9 +510,9 @@ $$
 
 期望的核心性质是**线性性**：对任意常数 $`a, b`$ 和函数 $`f, g`$，
 
-$$
+```math
 \mathbb{E}[a f(X) + b g(Y)] = a\,\mathbb{E}[f(X)] + b\,\mathbb{E}[g(Y)]
-$$
+```
 
 这一性质不要求 $`X, Y`$ 独立，是后续所有期望运算的基础。特别地，在策略梯度推导中，我们需要将 $`\mathbb{E}[\sum_t \nabla \log \pi \cdot r_t]`$ 拆分为各项之和，线性性是这一步成立的唯一依据。
 
@@ -524,9 +524,9 @@ $$
 
 **方差的可加性**仅在变量不相关时成立：若 $`\mathrm{Cov}(X_i, X_j) = 0`$ 对所有 $`i \neq j`$，则 $`\mathrm{Var}(\sum_i X_i) = \sum_i \mathrm{Var}(X_i)`$。一般情况下：
 
-$$
+```math
 \mathrm{Var}\!\left(\sum_{i=1}^{n} X_i\right) = \sum_{i=1}^{n} \mathrm{Var}(X_i) + 2\sum_{i<j} \mathrm{Cov}(X_i, X_j)
-$$
+```
 
 在 RL 中，回报 $`G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k}`$ 的各项之间高度相关（因为共享未来的随机性），因此回报的方差远大于各项方差之和。这是理解「为什么回报估计噪声大」以及「为什么需要基线函数减方差」（见第 3 章）的关键背景。
 
@@ -538,17 +538,17 @@ $$
 
 **塔性质（Law of Total Expectation）**：
 
-$$
+```math
 \mathbb{E}[Y] = \mathbb{E}_X[\mathbb{E}[Y|X]]
-$$
+```
 
 即先对 $`Y`$ 在给定 $`X`$ 下求条件期望，再对 $`X`$ 求边际期望，等于直接对 $`Y`$ 求期望。这个性质在 RL 中无处不在：贝尔曼方程本质上就是塔性质的应用——将未来回报的期望分解为当前奖励加上下一状态价值的期望（见第 2 章）。
 
 **条件方差的分解**（Law of Total Variance）也值得记住：
 
-$$
+```math
 \mathrm{Var}(Y) = \mathbb{E}_X[\mathrm{Var}(Y|X)] + \mathrm{Var}_X(\mathbb{E}[Y|X])
-$$
+```
 
 它说明总方差可以分解为「组内方差」和「组间方差」。在分析 TD 学习与蒙特卡洛方法的方差差异时，这个分解提供了精确的解释框架。
 
@@ -574,9 +574,9 @@ $$
 
 策略梯度的核心困难在于：目标函数 $`J(\boldsymbol{\theta}) = \mathbb{E}_{\tau \sim p_{\boldsymbol{\theta}}}[R(\tau)]`$ 的期望是对 $`\boldsymbol{\theta}`$ 相关的分布取的，不能直接对 $`\boldsymbol{\theta}`$ 求导后交换期望与微分的顺序（因为分布本身依赖 $`\boldsymbol{\theta}`$）。似然比技巧（1.7 节）解决了这个问题，但其结果是另一个期望，仍然无法解析计算。采样估计提供了最终的数值解法：用有限条轨迹的经验平均代替理论期望。整个链条是：
 
-$$
+```math
 \nabla_{\boldsymbol{\theta}} J(\boldsymbol{\theta}) = \mathbb{E}_{\tau \sim p_{\boldsymbol{\theta}}}[R(\tau) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(\tau)] \approx \frac{1}{N}\sum_{i=1}^{N} R(\tau_i) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(\tau_i)
-$$
+```
 
 左边的等号来自似然比技巧，右边的近似来自蒙特卡洛估计。两者缺一不可。
 
@@ -590,9 +590,9 @@ $$
 
 离散分布 $`p`$ 的香农熵（Shannon entropy）定义为：
 
-$$
+```math
 H(p) = -\sum_x p(x) \log p(x) = \mathbb{E}_{x \sim p}[-\log p(x)]
-$$
+```
 
 连续分布对应微分熵（differential entropy），形式类似但用积分替代求和，且不再具有非负性等离散熵的部分性质。
 
@@ -606,9 +606,9 @@ $$
 
 分布 $`p`$ 相对于 $`q`$ 的交叉熵（cross-entropy）定义为：
 
-$$
+```math
 H(p, q) = -\sum_x p(x) \log q(x) = \mathbb{E}_{x \sim p}[-\log q(x)]
-$$
+```
 
 注意期望是对 $`p`$ 取的，不是 $`q`$。交叉熵衡量的是「用 $`q`$ 编码服从 $`p`$ 的数据时的平均码长」。在机器学习中，分类任务的损失函数就是真实标签分布与模型预测分布之间的交叉熵。
 
@@ -618,17 +618,17 @@ $$
 
 KL 散度（Kullback-Leibler divergence）定义为交叉熵减去熵：
 
-$$
+```math
 D_{\mathrm{KL}}(p \| q) = H(p, q) - H(p) = \sum_x p(x) \log \frac{p(x)}{q(x)} = \mathbb{E}_{x \sim p}\!\left[\log \frac{p(x)}{q(x)}\right]
-$$
+```
 
 **定理（KL 非负性 / Gibbs 不等式）**：$`D_{\mathrm{KL}}(p \| q) \geq 0`$，等号当且仅当 $`p = q`$（几乎处处）时成立。
 
 **证明**：考虑函数 $`f(t) = -\log t`$，它是严格凸函数（$`f''(t) = 1/t^2 > 0`$ 对 $`t > 0`$）。由 Jensen 不等式（1.5 节），对凸函数 $`f`$ 有 $`f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]`$。令 $`X = q(x)/p(x)`$，期望对 $`p`$ 取：
 
-$$
+```math
 -\log \mathbb{E}_{x \sim p}\!\left[\frac{q(x)}{p(x)}\right] \leq \mathbb{E}_{x \sim p}\!\left[-\log \frac{q(x)}{p(x)}\right]
-$$
+```
 
 左边：$`\mathbb{E}_{x \sim p}[q(x)/p(x)] = \sum_x p(x) \cdot q(x)/p(x) = \sum_x q(x) = 1`$，故左边为 $`-\log 1 = 0`$。
 
@@ -658,9 +658,9 @@ KL 散度**不是**距离度量：$`D_{\mathrm{KL}}(p \| q) \neq D_{\mathrm{KL}}
 
 **定理**：设 $`f: \mathcal{D} \to \mathbb{R}`$ 是凸函数，$`X`$ 是取值于 $`\mathcal{D}`$ 的随机变量，则：
 
-$$
+```math
 f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]
-$$
+```
 
 若 $`f`$ 是严格凸函数，等号当且仅当 $`X`$ 为常数（几乎处处）时成立。若 $`f`$ 是凹函数，不等号反向。
 
@@ -699,15 +699,15 @@ Hessian 矩阵 $`\boldsymbol{H}(\boldsymbol{\theta})`$ 的元素为 $`H_{ij} = \
 
 **一阶泰勒展开**（带余项）：
 
-$$
+```math
 f(\boldsymbol{\theta} + \Delta \boldsymbol{\theta}) = f(\boldsymbol{\theta}) + \nabla f(\boldsymbol{\theta})^\top \Delta \boldsymbol{\theta} + o(\|\Delta \boldsymbol{\theta}\|)
-$$
+```
 
 **二阶泰勒展开**（带余项）：
 
-$$
+```math
 f(\boldsymbol{\theta} + \Delta \boldsymbol{\theta}) = f(\boldsymbol{\theta}) + \nabla f(\boldsymbol{\theta})^\top \Delta \boldsymbol{\theta} + \frac{1}{2} \Delta \boldsymbol{\theta}^\top \boldsymbol{H}(\boldsymbol{\theta}) \Delta \boldsymbol{\theta} + o(\|\Delta \boldsymbol{\theta}\|^2)
-$$
+```
 
 这里 $`o(\|\Delta \boldsymbol{\theta}\|^k)`$ 表示当 $`\|\Delta \boldsymbol{\theta}\| \to 0`$ 时比 $`\|\Delta \boldsymbol{\theta}\|^k`$ 更快趋于零的量。
 
@@ -739,13 +739,13 @@ $$
 
 Adam（Adaptive Moment Estimation）结合了动量和自适应学习率。维护两个指数移动平均：
 
-$$
+```math
 \boldsymbol{m}_t = \beta_1 \boldsymbol{m}_{t-1} + (1 - \beta_1) \boldsymbol{g}_t \quad \text{（一阶矩估计，即梯度的 EMA）}
-$$
+```
 
-$$
+```math
 \boldsymbol{v}_t = \beta_2 \boldsymbol{v}_{t-1} + (1 - \beta_2) \boldsymbol{g}_t^2 \quad \text{（二阶矩估计，即梯度平方的 EMA）}
-$$
+```
 
 偏差修正后：$`\hat{\boldsymbol{m}}_t = \boldsymbol{m}_t / (1 - \beta_1^t)`$，$`\hat{\boldsymbol{v}}_t = \boldsymbol{v}_t / (1 - \beta_2^t)`$。
 
@@ -773,27 +773,27 @@ $$
 
 **命题**：设 $`p_{\boldsymbol{\theta}}(x)`$ 是关于参数 $`\boldsymbol{\theta}`$ 可微的概率分布族，且满足正则条件（支撑集不依赖 $`\boldsymbol{\theta}`$，可在积分号下求导），则：
 
-$$
+```math
 \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[\nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)] = \boldsymbol{0}
-$$
+```
 
 **证明**：由 $`\int p_{\boldsymbol{\theta}}(x)\,dx = 1`$ 两边对 $`\boldsymbol{\theta}`$ 求导：
 
-$$
+```math
 \nabla_{\boldsymbol{\theta}} \int p_{\boldsymbol{\theta}}(x)\,dx = \nabla_{\boldsymbol{\theta}} 1 = \boldsymbol{0}
-$$
+```
 
 在正则条件下交换微分与积分：
 
-$$
+```math
 \int \nabla_{\boldsymbol{\theta}} p_{\boldsymbol{\theta}}(x)\,dx = \boldsymbol{0}
-$$
+```
 
 利用恒等式 $`\nabla_{\boldsymbol{\theta}} p_{\boldsymbol{\theta}}(x) = p_{\boldsymbol{\theta}}(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)`$（这是链式法则的直接结果：$`\nabla \log p = (\nabla p) / p`$），代入得：
 
-$$
+```math
 \int p_{\boldsymbol{\theta}}(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)\,dx = \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[\nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)] = \boldsymbol{0}
-$$
+```
 
 $`\blacksquare`$
 
@@ -805,27 +805,27 @@ $`\blacksquare`$
 
 **定理（似然比技巧 / Log-derivative trick）**：在同样的正则条件下，对任意与 $`\boldsymbol{\theta}`$ 无关的函数 $`f(x)`$：
 
-$$
+```math
 \nabla_{\boldsymbol{\theta}} \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[f(x)] = \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[f(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)]
-$$
+```
 
 **证明**：展开期望的定义：
 
-$$
+```math
 \nabla_{\boldsymbol{\theta}} \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[f(x)] = \nabla_{\boldsymbol{\theta}} \int f(x) p_{\boldsymbol{\theta}}(x)\,dx
-$$
+```
 
 $`f(x)`$ 不依赖 $`\boldsymbol{\theta}`$，故可移入梯度算子内部（再次交换微分与积分）：
 
-$$
+```math
 = \int f(x) \nabla_{\boldsymbol{\theta}} p_{\boldsymbol{\theta}}(x)\,dx
-$$
+```
 
 代入 $`\nabla_{\boldsymbol{\theta}} p_{\boldsymbol{\theta}}(x) = p_{\boldsymbol{\theta}}(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)`$：
 
-$$
+```math
 = \int f(x) p_{\boldsymbol{\theta}}(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)\,dx = \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[f(x) \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)]
-$$
+```
 
 $`\blacksquare`$
 
@@ -849,15 +849,15 @@ $`\blacksquare`$
 
 得分函数的协方差矩阵定义为 **Fisher 信息矩阵（Fisher Information Matrix, FIM）**：
 
-$$
+```math
 \boldsymbol{F}(\boldsymbol{\theta}) = \mathbb{E}_{x \sim p_{\boldsymbol{\theta}}}[\nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x) \, \nabla_{\boldsymbol{\theta}} \log p_{\boldsymbol{\theta}}(x)^\top]
-$$
+```
 
 由于得分函数均值为零（1.8.1 节），这就是其二阶矩矩阵。Fisher 信息矩阵也可以写成 KL 散度的 Hessian：
 
-$$
+```math
 \boldsymbol{F}(\boldsymbol{\theta}) = \nabla_{\boldsymbol{\theta}} \nabla_{\boldsymbol{\theta}'} D_{\mathrm{KL}}(p_{\boldsymbol{\theta}} \| p_{\boldsymbol{\theta}'}) \big|_{\boldsymbol{\theta}' = \boldsymbol{\theta}}
-$$
+```
 
 这个关系揭示了 Fisher 信息的几何含义：它度量了参数空间中分布族的局部曲率。在 $`\boldsymbol{\theta}`$ 附近，KL 散度的二阶近似为 $`D_{\mathrm{KL}}(p_{\boldsymbol{\theta}} \| p_{\boldsymbol{\theta} + \Delta \boldsymbol{\theta}}) \approx \frac{1}{2} \Delta \boldsymbol{\theta}^\top \boldsymbol{F}(\boldsymbol{\theta}) \Delta \boldsymbol{\theta}`$。
 
@@ -917,9 +917,9 @@ $$
 
 强化学习（Reinforcement Learning, RL）研究的核心问题是：一个智能体（agent）如何在与环境（environment）的持续交互中，通过试错来最大化某种累积信号。这一交互以离散时间步 $`t = 0, 1, 2, \dots`$ 展开：在每个时间步 $`t`$，agent 观察到环境的状态（state）$`s_t`$，据此选择一个动作（action）$`a_t`$；环境接收到动作后，以某个概率转移到新状态 $`s_{t+1}`$，同时向 agent 发出一个标量奖励（reward）$`r_{t+1}`$。如此往复，形成一条无限或有限的交互序列：
 
-$$
+```math
 s_0, a_0, r_1, s_1, a_1, r_2, s_2, a_2, r_3, \dots
-$$
+```
 
 为了对这一过程进行严格的数学分析，我们需要一个形式化框架。马尔可夫决策过程（Markov Decision Process, MDP）正是这样一个框架，它将上述交互抽象为一个五元组 $`(\mathcal{S}, \mathcal{A}, P, R, \gamma)`$，下面逐一给出严格定义。
 
@@ -933,17 +933,17 @@ $$
 
 **转移概率 $`P`$**：环境的动力学模型。定义为条件概率分布
 
-$$
+```math
 P(s' \mid s, a) = \Pr(s_{t+1} = s' \mid s_t = s, a_t = a),
-$$
+```
 
 满足归一化条件 $`\sum_{s' \in \mathcal{S}} P(s' \mid s, a) = 1`$ 对所有 $`(s, a)`$ 成立。注意这里只依赖当前状态-动作对 $`(s, a)`$，不依赖更早的历史——这就是马尔可夫性质，下文详述。
 
 **奖励函数 $`R`$**：我们采用期望奖励的形式，定义为
 
-$$
+```math
 R(s, a) = \mathbb{E}[r_{t+1} \mid s_t = s, a_t = a].
-$$
+```
 
 更一般地，奖励可以是随机变量，其分布也仅由 $`(s, a)`$（或 $`(s, a, s')`$）决定。为推导简洁，本章多数地方使用期望奖励 $`R(s,a)`$；当需要区分即时奖励的随机性时，会显式写出 $`r_{t+1}`$。
 
@@ -955,9 +955,9 @@ $$
 
 MDP 的核心假设是**马尔可夫性质（Markov property）**：给定当前状态和动作，下一状态的条件分布与之前的全部历史无关。形式化地，对任意 $`t`$ 和任意历史 $`h_t = (s_0, a_0, r_1, \dots, s_t, a_t)`$，有
 
-$$
+```math
 \Pr(s_{t+1} \mid h_t) = \Pr(s_{t+1} \mid s_t, a_t) = P(s_{t+1} \mid s_t, a_t).
-$$
+```
 
 这意味着状态 $`s_t`$ 是对历史的「充分统计量」——它已经包含了预测未来所需的全部信息。在实际问题中，如果原始观测不满足马尔可夫性质（例如只能看到部分信息），则问题应被建模为部分可观测马尔可夫决策过程（Partially Observable MDP, POMDP）。处理 POMDP 的标准方法包括引入信念状态（belief state）或使用循环神经网络等记忆结构来隐式维护历史信息。不过，PPO 算法本身仍然建立在 MDP 框架之上；当应用于部分可观测环境时，通常将观测历史编码为网络的输入，使策略在「扩展状态」上近似满足马尔可夫性。这一话题超出本章范围，此处仅作提示。
 
@@ -971,9 +971,9 @@ $$
 
 一条轨迹（trajectory），也称回合（episode），是从初始状态到终止状态（或无限延续）的一段完整交互记录。记有限 horizon $`H`$ 的轨迹为
 
-$$
+```math
 \tau = (s_0, a_0, r_1, s_1, a_1, r_2, \dots, s_{H-1}, a_{H-1}, r_H).
-$$
+```
 
 对于无限 horizon，$`\tau`$ 是一个无限序列；但在实际推导中，我们通常先处理有限 horizon 再取极限，或直接利用 $`\gamma < 1`$ 保证级数收敛。
 
@@ -983,16 +983,16 @@ $$
 
 设 agent 遵循策略 $`\pi(a \mid s)`$（即 $`\Pr(a_t = a \mid s_t = s) = \pi(a \mid s)`$），环境的初始状态分布为 $`p(s_0)`$。则轨迹 $`\tau`$ 出现的联合概率为
 
-$$
+```math
 p(\tau) = p(s_0) \prod_{t=0}^{H-1} \pi(a_t \mid s_t) \, P(s_{t+1} \mid s_t, a_t).
-$$
+```
 
 这个分解的关键在于：**环境动力学项 $`P(s_{t+1} \mid s_t, a_t)`$ 与策略项 $`\pi(a_t \mid s_t)`$ 是完全可分离的**。原因如下：
 
 1. 根据链式法则，联合概率可以写成条件概率的连乘：
-   $$
+   ```math
    p(\tau) = p(s_0) \prod_{t=0}^{H-1} p(a_t \mid s_t, \text{history before } t) \cdot p(s_{t+1} \mid s_t, a_t, \text{history before } t).
-   $$
+   ```
 
 2. 由策略的定义，agent 选择动作只依赖当前状态：$`p(a_t \mid s_t, \text{history}) = \pi(a_t \mid s_t)`$。
 
@@ -1010,9 +1010,9 @@ $$
 
 从时间步 $`t`$ 出发的折扣回报（discounted return）定义为
 
-$$
+```math
 G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \cdots
-$$
+```
 
 其中 $`\gamma \in [0, 1)`$ 是折扣因子（discount factor）。注意下标约定：$`r_{t+1}`$ 是在时间步 $`t`$ 执行动作后、到达 $`s_{t+1}`$ 时收到的奖励。
 
@@ -1023,9 +1023,9 @@ $$
 $`\gamma`$ 的存在并非纯粹的数学技巧，它有至少三层含义：
 
 1. **数学收敛性**：若即时奖励有界，即 $`|r_t| \leq R_{\max}`$ 对所有 $`t`$ 成立，则
-   $$
+   ```math
    |G_t| \leq \sum_{k=0}^{\infty} \gamma^k R_{\max} = \frac{R_{\max}}{1 - \gamma}.
-   $$
+   ```
    该几何级数在 $`\gamma < 1`$ 时收敛，保证了 $`G_t`$ 是有界的。下面给出完整证明。
 
 2. **时间偏好**：$`\gamma < 1`$ 意味着未来的奖励比眼前的奖励「价值更低」。这反映了经济学中的时间偏好：今天的 1 元比明天的 1 元更有价值。$`\gamma`$ 越接近 1，agent 越「有耐心」。
@@ -1040,9 +1040,9 @@ $`\gamma`$ 的存在并非纯粹的数学技巧，它有至少三层含义：
 
 **证明**：由三角不等式和几何级数求和公式，
 
-$$
+```math
 |G_t| = \left| \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} \right| \leq \sum_{k=0}^{\infty} \gamma^k |r_{t+k+1}| \leq \sum_{k=0}^{\infty} \gamma^k R_{\max} = R_{\max} \sum_{k=0}^{\infty} \gamma^k = \frac{R_{\max}}{1 - \gamma}.
-$$
+```
 
 最后一步利用了 $`\gamma \in [0, 1)`$ 时几何级数 $`\sum_{k=0}^\infty \gamma^k = \frac{1}{1-\gamma}`$ 的收敛性。$`\square`$
 
@@ -1062,9 +1062,9 @@ $$
 
 策略 $`\pi`$ 下的状态价值函数（state value function）定义为从状态 $`s`$ 出发、此后遵循策略 $`\pi`$ 所获得的期望折扣回报：
 
-$$
+```math
 V^\pi(s) = \mathbb{E}_\pi[G_t \mid s_t = s] = \mathbb{E}_\pi\left[ \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} \;\middle|\; s_t = s \right].
-$$
+```
 
 这里 $`\mathbb{E}_\pi[\cdot]`$ 表示期望是在策略 $`\pi`$ 和环境动力学 $`P`$ 共同诱导的轨迹分布下取的。由于 MDP 的时齐性（time-homogeneity），$`V^\pi(s)`$ 不依赖于具体的时间步 $`t`$。
 
@@ -1074,9 +1074,9 @@ $$
 
 动作价值函数（action value function）定义为在状态 $`s`$ 下先执行动作 $`a`$、此后遵循策略 $`\pi`$ 的期望折扣回报：
 
-$$
+```math
 Q^\pi(s, a) = \mathbb{E}_\pi[G_t \mid s_t = s, a_t = a] = \mathbb{E}_\pi\left[ \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} \;\middle|\; s_t = s, a_t = a \right].
-$$
+```
 
 注意第一个动作 $`a_t = a`$ 是被指定的，不受 $`\pi`$ 控制；从 $`t+1`$ 步起才按 $`\pi`$ 行动。
 
@@ -1086,9 +1086,9 @@ $$
 
 优势函数（advantage function）衡量在状态 $`s`$ 下选择动作 $`a`$ 相对于「平均水平」的好坏：
 
-$$
+```math
 A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s).
-$$
+```
 
 $`A^\pi(s, a) > 0`$ 表示动作 $`a`$ 优于策略 $`\pi`$ 在该状态的平均表现；$`A^\pi(s, a) < 0`$ 则表示劣于平均。
 
@@ -1100,9 +1100,9 @@ $`A^\pi(s, a) > 0`$ 表示动作 $`a`$ 优于策略 $`\pi`$ 在该状态的平�
 
 **推导**：由全期望公式（law of total expectation），
 
-$$
+```math
 V^\pi(s) = \mathbb{E}_\pi[G_t \mid s_t = s] = \sum_{a \in \mathcal{A}} \pi(a \mid s) \, \mathbb{E}_\pi[G_t \mid s_t = s, a_t = a] = \sum_{a \in \mathcal{A}} \pi(a \mid s) \, Q^\pi(s, a).
-$$
+```
 
 这正是 $`Q^\pi(s, a)`$ 在策略 $`\pi(\cdot \mid s)`$ 下的期望。$`\square`$
 
@@ -1110,14 +1110,14 @@ $$
 
 **推导**：利用优势函数的定义和关系一，
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}_{a \sim \pi(\cdot \mid s)}[A^\pi(s, a)] &= \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ Q^\pi(s, a) - V^\pi(s) \right] \\
 &= \sum_{a \in \mathcal{A}} \pi(a \mid s) Q^\pi(s, a) - V^\pi(s) \sum_{a \in \mathcal{A}} \pi(a \mid s) \\
 &= V^\pi(s) - V^\pi(s) \cdot 1 \\
 &= 0.
 \end{aligned}
-$$
+```
 
 第二步利用了 $`\sum_a \pi(a \mid s) = 1`$。$`\square`$
 
@@ -1133,15 +1133,15 @@ $$
 
 折扣回报有一个天然的递归分解：
 
-$$
+```math
 G_t = r_{t+1} + \gamma G_{t+1}.
-$$
+```
 
 这是因为
 
-$$
+```math
 G_t = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \cdots = r_{t+1} + \gamma (r_{t+2} + \gamma r_{t+3} + \cdots) = r_{t+1} + \gamma G_{t+1}.
-$$
+```
 
 这一简单的恒等式是推导所有贝尔曼方程的起点。
 
@@ -1151,15 +1151,15 @@ $$
 
 对 $`G_t = r_{t+1} + \gamma G_{t+1}`$ 两边在 $`s_t = s`$ 条件下取期望：
 
-$$
+```math
 V^\pi(s) = \mathbb{E}_\pi[r_{t+1} + \gamma G_{t+1} \mid s_t = s].
-$$
+```
 
 展开期望：首先对 $`a_t \sim \pi(\cdot \mid s)`$ 取期望，然后对 $`s_{t+1} \sim P(\cdot \mid s, a)`$ 取期望：
 
-$$
+```math
 V^\pi(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\pi(s') \right].
-$$
+```
 
 这就是 $`V^\pi`$ 的**贝尔曼期望方程（Bellman expectation equation）**。它表达了 $`V^\pi(s)`$ 与后继状态价值之间的自洽关系。
 
@@ -1169,15 +1169,15 @@ $$
 
 类似地，对 $`Q^\pi(s, a)`$ 有
 
-$$
+```math
 Q^\pi(s, a) = R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) \sum_{a' \in \mathcal{A}} \pi(a' \mid s') Q^\pi(s', a').
-$$
+```
 
 或者更简洁地，利用 $`V^\pi(s') = \sum_{a'} \pi(a' \mid s') Q^\pi(s', a')`$，写成
 
-$$
+```math
 Q^\pi(s, a) = R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\pi(s').
-$$
+```
 
 <a id="s2-5-4"></a>
 
@@ -1185,29 +1185,29 @@ $$
 
 定义**贝尔曼期望算子** $`T^\pi : \mathbb{R}^{|\mathcal{S}|} \to \mathbb{R}^{|\mathcal{S}|}`$：
 
-$$
+```math
 (T^\pi V)(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V(s') \right].
-$$
+```
 
 则贝尔曼期望方程等价于不动点方程 $`V^\pi = T^\pi V^\pi`$。
 
 当 $`\mathcal{S}`$ 有限时，可将 $`V^\pi`$ 视为 $`|\mathcal{S}|`$ 维列向量，定义策略诱导的转移矩阵 $`P^\pi \in \mathbb{R}^{|\mathcal{S}| \times |\mathcal{S}|}`$，其元素为
 
-$$
+```math
 P^\pi(s, s') = \sum_{a \in \mathcal{A}} \pi(a \mid s) P(s' \mid s, a),
-$$
+```
 
 以及期望奖励向量 $`R^\pi \in \mathbb{R}^{|\mathcal{S}|}`$，其元素为 $`R^\pi(s) = \sum_a \pi(a \mid s) R(s, a)`$。则贝尔曼期望方程可写成紧凑的矩阵形式：
 
-$$
+```math
 V^\pi = R^\pi + \gamma P^\pi V^\pi.
-$$
+```
 
 移项得 $`(I - \gamma P^\pi) V^\pi = R^\pi`$，因此
 
-$$
+```math
 V^\pi = (I - \gamma P^\pi)^{-1} R^\pi.
-$$
+```
 
 **为什么 $`I - \gamma P^\pi`$ 可逆？** 因为 $`P^\pi`$ 是一个随机矩阵（每行元素非负且和为 1），其谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma < 1`$ 时，$`\gamma P^\pi`$ 的谱半径 $`\rho(\gamma P^\pi) < 1`$，因此 $`I - \gamma P^\pi`$ 的特征值全部不为零（具体地，其特征值为 $`1 - \gamma \lambda_i`$，其中 $`\lambda_i`$ 是 $`P^\pi`$ 的特征值，$`|\lambda_i| \leq 1`$，故 $`|1 - \gamma \lambda_i| \geq 1 - \gamma > 0`$），矩阵可逆。这也保证了 $`V^\pi`$ 是唯一确定的。
 
@@ -1221,15 +1221,15 @@ $$
 
 定义最优状态价值函数 $`V^*(s) = \max_\pi V^\pi(s)`$ 和最优动作价值函数 $`Q^*(s, a) = \max_\pi Q^\pi(s, a)`$。它们满足**贝尔曼最优方程（Bellman optimality equation）**：
 
-$$
+```math
 V^*(s) = \max_{a \in \mathcal{A}} \left[ R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^*(s') \right].
-$$
+```
 
 对应地，定义**贝尔曼最优算子** $`T^*`$：
 
-$$
+```math
 (T^* V)(s) = \max_{a \in \mathcal{A}} \left[ R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V(s') \right].
-$$
+```
 
 则 $`V^* = T^* V^*`$。
 
@@ -1239,21 +1239,21 @@ $$
 
 $`T^*`$ 是一个 $`\gamma`$-压缩映射（$`\gamma`$-contraction mapping）。具体来说，对任意两个价值函数 $`V_1, V_2 \in \mathbb{R}^{|\mathcal{S}|}`$，在无穷范数 $`\|V\|_\infty = \max_s |V(s)|`$ 下有
 
-$$
+```math
 \|T^* V_1 - T^* V_2\|_\infty \leq \gamma \|V_1 - V_2\|_\infty.
-$$
+```
 
 **证明思路**：对任意状态 $`s`$，设 $`a_1^*`$ 是 $`T^* V_1`$ 在 $`s`$ 处取 max 的动作，则
 
-$$
+```math
 (T^* V_1)(s) = R(s, a_1^*) + \gamma \sum_{s'} P(s' \mid s, a_1^*) V_1(s').
-$$
+```
 
 而 $`(T^* V_2)(s) \geq R(s, a_1^*) + \gamma \sum_{s'} P(s' \mid s, a_1^*) V_2(s')`$（因为 $`a_1^*`$ 不一定是 $`V_2`$ 的最优动作，max 给出的值不小于任何特定动作的值）。两式相减：
 
-$$
+```math
 (T^* V_1)(s) - (T^* V_2)(s) \leq \gamma \sum_{s'} P(s' \mid s, a_1^*) [V_1(s') - V_2(s')] \leq \gamma \|V_1 - V_2\|_\infty.
-$$
+```
 
 最后一步利用了 $`P(s' \mid s, a_1^*) \geq 0`$ 且 $`\sum_{s'} P(s' \mid s, a_1^*) = 1`$。交换 $`V_1, V_2`$ 的角色可得反向不等式，合起来即 $`|(T^* V_1)(s) - (T^* V_2)(s)| \leq \gamma \|V_1 - V_2\|_\infty`$ 对所有 $`s`$ 成立，取 max 即得压缩性。$`\square`$
 
@@ -1275,9 +1275,9 @@ $$
 
 时序差分（temporal difference, TD）误差定义为
 
-$$
+```math
 \delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t),
-$$
+```
 
 其中 $`V`$ 是当前对真实价值函数的估计。TD 误差衡量的是「一步预测」与「实际观测到的即时奖励加下一步估值」之间的差异。它是几乎所有现代强化学习算法的核心信号。
 
@@ -1287,36 +1287,36 @@ $$
 
 **关键命题**：当 $`V = V^\pi`$（即估值恰好等于真实状态价值）时，
 
-$$
+```math
 \mathbb{E}[\delta_t \mid s_t = s, a_t = a] = A^\pi(s, a).
-$$
+```
 
 **完整推导**：将 $`\delta_t`$ 的定义代入条件期望：
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}[\delta_t \mid s_t = s, a_t = a] &= \mathbb{E}[r_{t+1} + \gamma V^\pi(s_{t+1}) - V^\pi(s_t) \mid s_t = s, a_t = a] \\
 &= \mathbb{E}[r_{t+1} \mid s_t = s, a_t = a] + \gamma \, \mathbb{E}[V^\pi(s_{t+1}) \mid s_t = s, a_t = a] - V^\pi(s).
 \end{aligned}
-$$
+```
 
 第一项就是 $`R(s, a)`$。第二项展开为
 
-$$
+```math
 \mathbb{E}[V^\pi(s_{t+1}) \mid s_t = s, a_t = a] = \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\pi(s').
-$$
+```
 
 回忆 2.5.3 节中 $`Q^\pi`$ 的贝尔曼期望方程：
 
-$$
+```math
 Q^\pi(s, a) = R(s, a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\pi(s').
-$$
+```
 
 因此前两项之和恰好等于 $`Q^\pi(s, a)`$，于是
 
-$$
+```math
 \mathbb{E}[\delta_t \mid s_t = s, a_t = a] = Q^\pi(s, a) - V^\pi(s) = A^\pi(s, a).
-$$
+```
 
 $`\square`$
 
@@ -1328,9 +1328,9 @@ $`\square`$
 
 在实践中，$`V`$ 通常由神经网络参数化，不可能精确等于 $`V^\pi`$。此时 $`\mathbb{E}[\delta_t \mid s_t, a_t] = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)`$ 的期望不再等于 $`A^\pi(s_t, a_t)`$，而是包含了 $`V`$ 的近似误差。具体地，
 
-$$
+```math
 \mathbb{E}[\delta_t \mid s_t = s, a_t = a] = Q^\pi(s, a) - V(s) + \gamma \sum_{s'} P(s' \mid s, a)[V(s') - V^\pi(s')],
-$$
+```
 
 其中最后一项是 $`V`$ 在后继状态上的偏差经环境动力学传播后的结果。因此，用近似 $`V`$ 计算的 $`\delta_t`$ 是优势函数的**有偏估计**。偏差的大小取决于 $`V`$ 的拟合质量；随着训练推进、$`V \to V^\pi`$，偏差趋于零。这一偏差-方差的权衡将在第 4 章量化分析。
 
@@ -1440,35 +1440,35 @@ $$
 
 首先明确优化目标。设 $`\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \dots)`$ 为一条轨迹（trajectory），其累积折扣回报为：
 
-$$
+```math
 R(\tau) = \sum_{t=0}^{\infty} \gamma^t r_t
-$$
+```
 
 其中 $`\gamma \in [0,1]`$ 为折扣因子（见第 2 章）。策略 $`\pi_\theta`$ 下的期望回报定义为：
 
-$$
+```math
 J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\big[R(\tau)\big] = \int p_\theta(\tau)\, R(\tau)\, d\tau \tag{3.1}
-$$
+```
 
 这里 $`p_\theta(\tau)`$ 是策略 $`\pi_\theta`$ 生成的轨迹分布。具体地，若初始状态分布为 $`\rho_0(s_0)`$，环境动力学（transition dynamics）为 $`P(s_{t+1}|s_t, a_t)`$，则：
 
-$$
+```math
 p_\theta(\tau) = \rho_0(s_0) \prod_{t=0}^{\infty} P(s_{t+1}|s_t, a_t)\, \pi_\theta(a_t|s_t) \tag{3.2}
-$$
+```
 
 式 (3.1) 是策略梯度的**轨迹形式**，也是后续推导的出发点。
 
 另一种等价写法利用**折扣状态访问分布**（discounted state visitation distribution）$`d^\pi(s)`$，其定义为：
 
-$$
+```math
 d^\pi(s) = (1-\gamma) \sum_{t=0}^{\infty} \gamma^t \Pr(s_t = s \mid \pi) \tag{3.3}
-$$
+```
 
 系数 $`(1-\gamma)`$ 使 $`d^\pi(s)`$ 归一化为概率分布（当 $`\gamma < 1`$ 时）。可以证明（推导见第 2 章）：
 
-$$
+```math
 J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta}}\big[V^{\pi_\theta}(s)\big] \tag{3.4}
-$$
+```
 
 式 (3.4) 在理论分析中非常方便，但在实际计算策略梯度时，我们通常使用式 (3.1) 的轨迹形式。原因在于：$`d^{\pi_\theta}`$ 本身依赖于 $`\theta`$，对式 (3.4) 直接求梯度会产生 $`\nabla_\theta d^{\pi_\theta}`$ 项，该项涉及整个状态空间的无穷级数，难以处理。而策略梯度定理的精妙之处恰恰在于：**对式 (3.1) 求梯度后，结果恰好可以用 $`d^{\pi_\theta}`$ 下的期望来表达**，从而绕开了对 $`d^{\pi_\theta}`$ 直接求导的困难。
 
@@ -1484,39 +1484,39 @@ $$
 
 从式 (3.1) 出发，假设积分与微分可交换（正则性条件，要求 $`\pi_\theta(a|s)`$ 关于 $`\theta`$ 连续可微且支撑集不随 $`\theta`$ 变化），有：
 
-$$
+```math
 \nabla_\theta J(\theta) = \nabla_\theta \int p_\theta(\tau)\, R(\tau)\, d\tau = \int \nabla_\theta p_\theta(\tau)\, R(\tau)\, d\tau \tag{3.5}
-$$
+```
 
 关键技巧是**乘除 $`p_\theta(\tau)`$**（即似然比技巧 / likelihood ratio trick，其数学基础见第 1 章）：
 
-$$
+```math
 \nabla_\theta p_\theta(\tau) = p_\theta(\tau) \cdot \frac{\nabla_\theta p_\theta(\tau)}{p_\theta(\tau)} = p_\theta(\tau) \cdot \nabla_\theta \log p_\theta(\tau) \tag{3.6}
-$$
+```
 
 代入式 (3.5)：
 
-$$
+```math
 \nabla_\theta J(\theta) = \int p_\theta(\tau) \cdot \nabla_\theta \log p_\theta(\tau) \cdot R(\tau)\, d\tau = \mathbb{E}_{\tau \sim \pi_\theta}\big[R(\tau) \cdot \nabla_\theta \log p_\theta(\tau)\big] \tag{3.7}
-$$
+```
 
 现在展开 $`\log p_\theta(\tau)`$。由式 (3.2) 取对数：
 
-$$
+```math
 \log p_\theta(\tau) = \log \rho_0(s_0) + \sum_{t=0}^{\infty} \Big[\log P(s_{t+1}|s_t, a_t) + \log \pi_\theta(a_t|s_t)\Big] \tag{3.8}
-$$
+```
 
 对 $`\theta`$ 求梯度时，注意 $`\rho_0(s_0)`$ 和 $`P(s_{t+1}|s_t, a_t)`$ **均不含 $`\theta`$**——它们由环境和初始分布决定，与策略参数无关。这正是 **model-free**（模型无关）方法的关键：我们不需要知道环境动力学的解析形式，也不需要对其求导。因此：
 
-$$
+```math
 \nabla_\theta \log p_\theta(\tau) = \sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t) \tag{3.9}
-$$
+```
 
 将式 (3.9) 代入式 (3.7)，得到 **REINFORCE** 算法的策略梯度估计量：
 
-$$
+```math
 \nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\left[R(\tau) \sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t)\right] \tag{3.10}
-$$
+```
 
 这就是策略梯度定理的最基本形式。它的含义非常直观：如果某条轨迹的回报 $`R(\tau)`$ 较高，就增大该轨迹上所有动作的概率；反之则减小。
 
@@ -1526,9 +1526,9 @@ $$
 
 第 1 章已经证明了似然比恒等式：对于任意关于 $`\theta`$ 可微的概率密度 $`p_\theta(x)`$ 和函数 $`f(x)`$，只要正则性条件满足，就有：
 
-$$
+```math
 \nabla_\theta \mathbb{E}_{x \sim p_\theta}[f(x)] = \mathbb{E}_{x \sim p_\theta}\big[f(x) \cdot \nabla_\theta \log p_\theta(x)\big] \tag{3.11}
-$$
+```
 
 直接将 $`x = \tau`$、$`f(\tau) = R(\tau)`$、$`p_\theta = p_\theta(\tau)`$ 代入式 (3.11)，立即得到式 (3.7)。再将式 (3.9) 代入，同样得到式 (3.10)。
 
@@ -1552,20 +1552,20 @@ $$
 
 **定理 3.1（因果性）**：对于 $`t' < t`$，有
 
-$$
+```math
 \mathbb{E}_{\tau \sim \pi_\theta}\big[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot r_{t'}\big] = 0 \tag{3.12}
-$$
+```
 
 **证明**：利用条件期望的塔性质（tower property / law of iterated expectations）。记 $`\tau_{0:t} = (s_0, a_0, r_0, \dots, s_t, a_t)`$ 为截至时刻 $`t`$ 的历史。注意 $`r_{t'}`$ 在 $`t' < t`$ 时是 $`\tau_{0:t}`$ 的确定性函数，而 $`\nabla_\theta \log \pi_\theta(a_t|s_t)`$ 仅依赖于 $`(s_t, a_t)`$。我们有：
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}_{\tau}\big[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot r_{t'}\big] &= \mathbb{E}_{\tau_{0:t}}\left[r_{t'} \cdot \mathbb{E}_{a_t \sim \pi_\theta(\cdot|s_t)}\big[\nabla_\theta \log \pi_\theta(a_t|s_t) \,\big|\, \tau_{0:t-1}, s_t\big]\right] \\
 &= \mathbb{E}_{\tau_{0:t}}\left[r_{t'} \cdot \nabla_\theta \sum_{a_t} \pi_\theta(a_t|s_t)\right] \\
 &= \mathbb{E}_{\tau_{0:t}}\left[r_{t'} \cdot \nabla_\theta 1\right] \\
 &= 0
 \end{aligned} \tag{3.13}
-$$
+```
 
 第二步利用了 $`s_t`$ 在给定 $`\tau_{0:t-1}`$ 后已由环境动力学确定（$`s_t`$ 是 $`\tau_{0:t-1}`$ 的函数），因此内层期望只对 $`a_t`$ 取；第三步利用了概率归一化 $`\sum_a \pi_\theta(a|s) = 1`$。**证毕。** ∎
 
@@ -1577,15 +1577,15 @@ $$
 
 由因果性定理，式 (3.10) 中 $`R(\tau) = \sum_{k=0}^{\infty} \gamma^k r_k`$ 里所有 $`k < t`$ 的项对第 $`t`$ 步梯度的期望贡献为零，可以安全去掉。定义 **reward-to-go**（未来回报）：
 
-$$
+```math
 G_t = \sum_{k=t}^{\infty} \gamma^{k-t} r_k \tag{3.14}
-$$
+```
 
 注意这里 $`G_t`$ 从 $`r_t`$ 开始累加，且以 $`\gamma^{k-t}`$ 而非 $`\gamma^k`$ 加权（即相对于时刻 $`t`$ 重新归一化了折扣）。于是策略梯度可以写为：
 
-$$
+```math
 \nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\left[\sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot G_t\right] \tag{3.15}
-$$
+```
 
 **关于折扣权重的说明**：有些文献使用 $`\tilde{G}_t = \sum_{k=t}^{\infty} \gamma^k r_k`$（保留全局折扣权重 $`\gamma^k`$），此时式 (3.15) 变为 $`\nabla_\theta J(\theta) = \mathbb{E}[\sum_t \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \tilde{G}_t]`$。这两种写法都是无偏的（因为被去掉的项期望为零），但方差特性略有不同。实践中更常用式 (3.14) 的定义，因为它与 $`Q^\pi(s_t, a_t)`$ 的尺度一致。
 
@@ -1597,25 +1597,25 @@ Reward-to-go 的意义不仅是降方差：它还将全轨迹回报替换为一�
 
 回忆第 2 章的定义：$`Q^\pi(s,a) = \mathbb{E}_{\tau \sim \pi}[G_t \mid s_t = s, a_t = a]`$。对式 (3.15) 中的期望做条件分解：
 
-$$
+```math
 \begin{aligned}
 \nabla_\theta J(\theta) &= \mathbb{E}_{\tau \sim \pi_\theta}\left[\sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot G_t\right] \\
 &= \sum_{t=0}^{\infty} \mathbb{E}_{s_t, a_t}\left[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \mathbb{E}[G_t \mid s_t, a_t]\right] \\
 &= \sum_{t=0}^{\infty} \mathbb{E}_{s_t, a_t}\left[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot Q^{\pi_\theta}(s_t, a_t)\right]
 \end{aligned} \tag{3.16}
-$$
+```
 
 进一步，$`(s_t, a_t)`$ 的边缘分布正是 $`d^{\pi_\theta}(s) \cdot \pi_\theta(a|s) / (1-\gamma)`$（注意 $`d^{\pi_\theta}`$ 的定义中包含 $`(1-\gamma)`$ 归一化因子）。将所有时间步合并为一个期望，得到**策略梯度定理的标准形式**：
 
-$$
+```math
 \nabla_\theta J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta},\, a \sim \pi_\theta(\cdot|s)}\Big[\nabla_\theta \log \pi_\theta(a|s) \cdot Q^{\pi_\theta}(s,a)\Big] \tag{3.17}
-$$
+```
 
 在实际算法中，常数因子 $`1/(1-\gamma)`$ 通常被吸收进学习率，因此常见的写法省略该因子：
 
-$$
+```math
 \nabla_\theta J(\theta) \propto \mathbb{E}_{s \sim d^{\pi_\theta},\, a \sim \pi_\theta(\cdot|s)}\Big[\nabla_\theta \log \pi_\theta(a|s) \cdot Q^{\pi_\theta}(s,a)\Big] \tag{3.18}
-$$
+```
 
 式 (3.18) 是后续所有策略梯度算法的理论基石。它告诉我们：策略梯度的方向由 $`Q^{\pi_\theta}(s,a)`$ 加权决定——好的动作（$`Q`$ 值高）获得更大的概率提升。
 
@@ -1631,23 +1631,23 @@ $$
 
 **定理 3.2**：对于任意只依赖状态 $`s`$ 的函数 $`b(s)`$（称为基线），有
 
-$$
+```math
 \mathbb{E}_{a \sim \pi_\theta(\cdot|s)}\big[\nabla_\theta \log \pi_\theta(a|s) \cdot b(s)\big] = 0 \tag{3.19}
-$$
+```
 
 **证明**：由于 $`b(s)`$ 不依赖 $`a`$，可以提到期望外面：
 
-$$
+```math
 b(s) \cdot \mathbb{E}_{a \sim \pi_\theta(\cdot|s)}\big[\nabla_\theta \log \pi_\theta(a|s)\big] = b(s) \cdot \nabla_\theta \sum_a \pi_\theta(a|s) = b(s) \cdot \nabla_\theta 1 = 0 \tag{3.20}
-$$
+```
 
 **证毕。** ∎
 
 这意味着我们可以将式 (3.18) 中的 $`Q^{\pi_\theta}(s,a)`$ 替换为 $`Q^{\pi_\theta}(s,a) - b(s)`$，梯度期望不变。特别地，取 $`b(s) = V^{\pi_\theta}(s)`$，得到：
 
-$$
+```math
 \nabla_\theta J(\theta) \propto \mathbb{E}_{s \sim d^{\pi_\theta},\, a \sim \pi_\theta(\cdot|s)}\Big[\nabla_\theta \log \pi_\theta(a|s) \cdot A^{\pi_\theta}(s,a)\Big] \tag{3.21}
-$$
+```
 
 其中 $`A^{\pi_\theta}(s,a) = Q^{\pi_\theta}(s,a) - V^{\pi_\theta}(s)`$ 就是第 2 章定义的**优势函数**。
 
@@ -1665,21 +1665,21 @@ $$
 
 既然任意 $`b(s)`$ 都不引入偏差，那么哪个 $`b(s)`$ 使方差最小？考虑单步情形（固定状态 $`s`$），梯度估计量为 $`g = \nabla_\theta \log \pi_\theta(a|s) \cdot (Q^\pi(s,a) - b(s))`$。为简化记号，令 $`\psi = \nabla_\theta \log \pi_\theta(a|s)`$，$`Q = Q^\pi(s,a)`$，则：
 
-$$
+```math
 \text{Var}[g] = \mathbb{E}_a\big[\|\psi \cdot (Q - b)\|^2\big] - \big\|\mathbb{E}_a[\psi \cdot (Q - b)]\big\|^2 \tag{3.22}
-$$
+```
 
 第二项等于 $`\|\nabla_\theta J\|^2`$，与 $`b`$ 无关（因为基线不改变期望）。因此最小化方差等价于最小化第一项。对 $`b`$ 求导并令其为零：
 
-$$
+```math
 \frac{\partial}{\partial b} \mathbb{E}_a\big[\|\psi\|^2 (Q - b)^2\big] = -2\, \mathbb{E}_a\big[\|\psi\|^2 (Q - b)\big] = 0 \tag{3.23}
-$$
+```
 
 解得**最优基线**：
 
-$$
+```math
 b^*(s) = \frac{\mathbb{E}_{a \sim \pi}\big[\|\nabla_\theta \log \pi_\theta(a|s)\|^2 \cdot Q^\pi(s,a)\big]}{\mathbb{E}_{a \sim \pi}\big[\|\nabla_\theta \log \pi_\theta(a|s)\|^2\big]} \tag{3.24}
-$$
+```
 
 注意 $`b^*(s)`$ **不是** $`V^\pi(s)`$，而是被 $`\|\nabla_\theta \log \pi_\theta(a|s)\|^2`$ 加权的 $`Q`$ 值平均。只有当 $`\|\nabla_\theta \log \pi_\theta(a|s)\|^2`$ 对所有 $`a`$ 近似相等时，$`b^*(s) \approx V^\pi(s)`$。尽管如此，实践中几乎总是使用 $`V^\pi(s)`$ 作为基线，原因是：(1) $`V^\pi(s)`$ 容易通过价值网络估计；(2) 最优基线需要额外估计 $`\|\nabla \log \pi\|^2`$，计算开销大且自身有估计误差；(3) $`V^\pi(s)`$ 在实践中已经足够有效。
 
@@ -1691,9 +1691,9 @@ $$
 
 将策略梯度估计量写成如下通用形式：
 
-$$
+```math
 \hat{g} = \sum_{t=0}^{\infty} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot \hat{A}_t \tag{3.25}
-$$
+```
 
 其中 $`\hat{A}_t`$ 是对真实优势 $`A^{\pi_\theta}(s_t, a_t)`$ 的某种估计。不同的 $`\hat{A}_t`$ 选择构成一个**偏差-方差权衡谱**：
 
@@ -1721,9 +1721,9 @@ $$
 ### 3.7.1 两个网络的分工
 
 - **Actor（策略网络）**$`\pi_\theta(a|s)`$：参数为 $`\theta`$，输出动作概率分布。按式 (3.21) 更新：
-  $$
+  ```math
   \theta \leftarrow \theta + \alpha_\theta \cdot \nabla_\theta \log \pi_\theta(a|s) \cdot \hat{A}(s,a) \tag{3.26}
-  $$
+  ```
 
 - **Critic（价值网络）**$`V_\phi(s)`$：参数为 $`\phi`$，估计状态值函数 $`V^{\pi_\theta}(s)`$。用于提供基线和/或优势估计。
 
@@ -1733,9 +1733,9 @@ $$
 
 Critic 的目标是准确估计 $`V^{\pi_\theta}(s)`$。最直接的损失函数是最小化均方误差：
 
-$$
+```math
 L_V(\phi) = \mathbb{E}_{s \sim d^{\pi_\theta}}\Big[\big(V_\phi(s) - V^{\pi_\theta}(s)\big)^2\Big] \tag{3.27}
-$$
+```
 
 但 $`V^{\pi_\theta}(s)`$ 本身未知。实践中用以下替代目标之一：
 
@@ -1901,15 +1901,15 @@ $$
 
 在第 3 章中，我们已经推导出策略梯度的通用估计量形式：
 
-$$
+```math
 g = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t | s_t) \cdot \hat{A}_t \right]
-$$
+```
 
 其中 $`\hat{A}_t`$ 是真实优势函数 $`A^\pi(s_t, a_t)`$ 的某种估计器。根据第 2 章的定义，真实优势函数为：
 
-$$
+```math
 A^\pi(s_t, a_t) = Q^\pi(s_t, a_t) - V^\pi(s_t)
-$$
+```
 
 它衡量的是在状态 $`s_t`$ 下采取动作 $`a_t`$ 相对于平均水平的"好坏程度"。策略梯度定理（见第 3 章）告诉我们，只要 $`\hat{A}_t`$ 是 $`A^\pi(s_t, a_t)`$ 的无偏估计，上述梯度估计就是正确的。然而在实际算法中，我们几乎从不使用无偏估计——因为无偏往往意味着极高的方差，导致训练不稳定。
 
@@ -1917,9 +1917,9 @@ $$
 
 为此，我们引入均方误差（Mean Squared Error, MSE）分解作为全章的分析框架。对于任意估计器 $`\hat{A}_t`$，其关于真实优势 $`A^\pi(s_t, a_t)`$ 的 MSE 可分解为：
 
-$$
+```math
 \text{MSE}(\hat{A}_t) = \mathbb{E}\left[ (\hat{A}_t - A^\pi(s_t, a_t))^2 \right] = \underbrace{\left( \mathbb{E}[\hat{A}_t] - A^\pi(s_t, a_t) \right)^2}_{\text{偏差}^2} + \underbrace{\text{Var}(\hat{A}_t)}_{\text{方差}}
-$$
+```
 
 这个分解告诉我们：一个估计器的总误差由偏差的平方与方差两部分组成。减小其中一个往往以增大另一个为代价。本章的所有推导与分析都围绕这个权衡展开。
 
@@ -1933,17 +1933,17 @@ $$
 
 首先回顾 TD 残差（TD residual）。设 $`V(s)`$ 是我们对价值函数的近似（通常是一个神经网络），$`\gamma \in [0, 1)`$ 是折扣因子（见第 2 章）。定义单步 TD 残差为：
 
-$$
+```math
 \delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)
-$$
+```
 
 其中 $`r_t`$ 是在时刻 $`t`$ 执行动作 $`a_t`$ 后获得的即时奖励，$`s_{t+1}`$ 是转移后的下一个状态。当 $`V = V^\pi`$（即价值函数恰好等于真实状态价值）时，由贝尔曼方程（见第 2 章）可知 $`\mathbb{E}[\delta_t^{V^\pi} | s_t, a_t] = A^\pi(s_t, a_t)`$，因此 $`\delta_t^{V^\pi}`$ 是优势的无偏估计。但在实践中 $`V \neq V^\pi`$，所以 $`\delta_t^V`$ 是有偏的。
 
 我们将 **1-step 优势估计器** 定义为：
 
-$$
+```math
 \hat{A}_t^{(1)} = \delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)
-$$
+```
 
 <a id="s4-2-2"></a>
 
@@ -1951,21 +1951,21 @@ $$
 
 自然地，我们可以利用两步真实奖励来减少对 bootstrap 值 $`V(s_{t+1})`$ 的依赖。定义 **2-step 优势估计器** 为：
 
-$$
+```math
 \hat{A}_t^{(2)} = r_t + \gamma r_{t+1} + \gamma^2 V(s_{t+2}) - V(s_t)
-$$
+```
 
 下面证明它等于两个 TD 残差的加权和：$`\hat{A}_t^{(2)} = \delta_t^V + \gamma \delta_{t+1}^V`$。
 
 **证明：** 将 $`\delta_t^V`$ 和 $`\delta_{t+1}^V`$ 的定义代入右边：
 
-$$
+```math
 \begin{aligned}
 \delta_t^V + \gamma \delta_{t+1}^V &= \left( r_t + \gamma V(s_{t+1}) - V(s_t) \right) + \gamma \left( r_{t+1} + \gamma V(s_{t+2}) - V(s_{t+1}) \right) \\
 &= r_t + \gamma V(s_{t+1}) - V(s_t) + \gamma r_{t+1} + \gamma^2 V(s_{t+2}) - \gamma V(s_{t+1}) \\
 &= r_t + \gamma r_{t+1} + \gamma^2 V(s_{t+2}) - V(s_t)
 \end{aligned}
-$$
+```
 
 注意中间项 $`\gamma V(s_{t+1})`$ 与 $`-\gamma V(s_{t+1})`$ 恰好抵消。这正是 $`\hat{A}_t^{(2)}`$ 的定义。证毕。
 
@@ -1977,15 +1977,15 @@ $$
 
 推广上述模式，定义 **k-step 优势估计器** 为：
 
-$$
+```math
 \hat{A}_t^{(k)} = \sum_{l=0}^{k-1} \gamma^l r_{t+l} + \gamma^k V(s_{t+k}) - V(s_t)
-$$
+```
 
 同时，我们有以下等价表述：
 
-$$
+```math
 \hat{A}_t^{(k)} = \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V
-$$
+```
 
 **命题：** 上述两种形式对所有正整数 $`k`$ 等价。
 
@@ -1997,7 +1997,7 @@ $$
 
 **归纳步骤：** 考虑 $`k+1`$ 的情形：
 
-$$
+```math
 \begin{aligned}
 \sum_{l=0}^{k} \gamma^l \delta_{t+l}^V &= \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V + \gamma^k \delta_{t+k}^V \\
 &= \hat{A}_t^{(k)} + \gamma^k \left( r_{t+k} + \gamma V(s_{t+k+1}) - V(s_{t+k}) \right) \\
@@ -2005,7 +2005,7 @@ $$
 &= \sum_{l=0}^{k-1} \gamma^l r_{t+l} + \gamma^k r_{t+k} + \gamma^{k+1} V(s_{t+k+1}) - V(s_t) \\
 &= \sum_{l=0}^{k} \gamma^l r_{t+l} + \gamma^{k+1} V(s_{t+k+1}) - V(s_t)
 \end{aligned}
-$$
+```
 
 同样，$`\gamma^k V(s_{t+k})`$ 与 $`-\gamma^k V(s_{t+k})`$ 抵消。这正是 $`\hat{A}_t^{(k+1)}`$ 的定义。归纳完成。
 
@@ -2015,9 +2015,9 @@ $$
 
 令 $`k \to \infty`$，假设 episode 无限长或适当处理终止条件，由于 $`\gamma < 1`$，$`\gamma^k V(s_{t+k}) \to 0`$（在 $`V`$ 有界的条件下），我们得到：
 
-$$
+```math
 \hat{A}_t^{(\infty)} = \sum_{l=0}^{\infty} \gamma^l r_{t+l} - V(s_t)
-$$
+```
 
 这就是 **蒙特卡洛（Monte Carlo）优势估计**。它完全使用真实回报，不依赖任何 bootstrap 值（除了作为基线的 $`V(s_t)`$），因此在 $`V`$ 准确时是无偏的，但方差最大。
 
@@ -2033,53 +2033,53 @@ $$
 
 **命题：** k-step 优势估计器的偏差满足：
 
-$$
+```math
 \mathbb{E}[\hat{A}_t^{(k)}] - A^\pi(s_t, a_t) = \gamma^k \, \mathbb{E}\left[ V(s_{t+k}) - V^\pi(s_{t+k}) \right]
-$$
+```
 
 其中期望是关于从 $`(s_t, a_t)`$ 出发、遵循策略 $`\pi`$ 的状态-动作轨迹取的。
 
 **推导：** 首先回忆真实优势的另一种表达。由第 2 章可知：
 
-$$
+```math
 A^\pi(s_t, a_t) = \mathbb{E}\left[ \sum_{l=0}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] - V^\pi(s_t)
-$$
+```
 
 而 k-step 估计器的期望为：
 
-$$
+```math
 \mathbb{E}[\hat{A}_t^{(k)}] = \mathbb{E}\left[ \sum_{l=0}^{k-1} \gamma^l r_{t+l} + \gamma^k V(s_{t+k}) - V(s_t) \,\middle|\, s_t, a_t \right]
-$$
+```
 
 两式相减：
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}[\hat{A}_t^{(k)}] - A^\pi(s_t, a_t) &= \mathbb{E}\left[ \sum_{l=0}^{k-1} \gamma^l r_{t+l} + \gamma^k V(s_{t+k}) \,\middle|\, s_t, a_t \right] - V(s_t) \\
 &\quad - \left( \mathbb{E}\left[ \sum_{l=0}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] - V^\pi(s_t) \right)
 \end{aligned}
-$$
+```
 
 将第一个期望拆成前 $`k`$ 项与剩余项之和：
 
-$$
+```math
 \mathbb{E}\left[ \sum_{l=0}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] = \mathbb{E}\left[ \sum_{l=0}^{k-1} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] + \mathbb{E}\left[ \sum_{l=k}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right]
-$$
+```
 
 由马尔可夫性质，$`\mathbb{E}\left[ \sum_{l=k}^{\infty} \gamma^l r_{t+l} \,\middle|\, s_t, a_t \right] = \gamma^k \, \mathbb{E}[V^\pi(s_{t+k}) | s_t, a_t]`$。代入并整理：
 
-$$
+```math
 \begin{aligned}
 \mathbb{E}[\hat{A}_t^{(k)}] - A^\pi(s_t, a_t) &= \gamma^k \, \mathbb{E}[V(s_{t+k}) | s_t, a_t] - \gamma^k \, \mathbb{E}[V^\pi(s_{t+k}) | s_t, a_t] - V(s_t) + V^\pi(s_t) \\
 &= \gamma^k \, \mathbb{E}[V(s_{t+k}) - V^\pi(s_{t+k}) | s_t, a_t] + \left( V^\pi(s_t) - V(s_t) \right)
 \end{aligned}
-$$
+```
 
 等等——这里多出了一项 $`V^\pi(s_t) - V(s_t)`$。这是因为我们在 $`\hat{A}_t^{(k)}`$ 中减去的是 $`V(s_t)`$ 而非 $`V^\pi(s_t)`$。如果我们把偏差定义为相对于 $`Q^\pi(s_t, a_t) - V(s_t)`$（即以当前近似 $`V(s_t)`$ 为基线），则该项消失。更精确地，当我们关注的是"用 $`\hat{A}_t^{(k)}`$ 替代 $`A^\pi`$ 引入的额外误差"时，关键的偏差来源正是 bootstrap 端点处 $`V`$ 与 $`V^\pi`$ 的差距被 $`\gamma^k`$ 缩放的部分：
 
-$$
+```math
 \text{Bias}(\hat{A}_t^{(k)}) \propto \gamma^k \, \mathbb{E}[V(s_{t+k}) - V^\pi(s_{t+k})]
-$$
+```
 
 **关键结论：** 偏差随 $`k`$ 增大而以 $`\gamma^k`$ 的速率指数衰减。当 $`k=1`$ 时偏差最大（完全依赖一步 bootstrap）；当 $`k \to \infty`$ 时偏差趋于零（蒙特卡洛估计无偏）。
 
@@ -2089,9 +2089,9 @@ $$
 
 方差的来源更为直观。k-step 估计器中包含 $`k`$ 个随机奖励项 $`r_t, r_{t+1}, \dots, r_{t+k-1}`$，每一项都受环境动态和策略随机性的影响。粗略地，若各步奖励的方差量级为 $`\sigma_r^2`$ 且近似独立，则：
 
-$$
+```math
 \text{Var}(\hat{A}_t^{(k)}) \approx \sum_{l=0}^{k-1} \gamma^{2l} \, \sigma_r^2 = \sigma_r^2 \cdot \frac{1 - \gamma^{2k}}{1 - \gamma^2}
-$$
+```
 
 这是一个关于 $`k`$ 单调递增的函数。当 $`k=1`$ 时方差最小（仅含一步奖励加上 bootstrap 值的噪声）；当 $`k \to \infty`$ 时方差趋于 $`\sigma_r^2 / (1 - \gamma^2)`$，达到最大值。
 
@@ -2125,21 +2125,21 @@ $$
 
 定义 n-step 回报为：
 
-$$
+```math
 G_t^{(n)} = \sum_{l=0}^{n-1} \gamma^l r_{t+l} + \gamma^n V(s_{t+n})
-$$
+```
 
 $`\lambda`$-return 是各 n-step 回报的指数加权平均：
 
-$$
+```math
 G_t^\lambda = (1 - \lambda) \sum_{n=1}^{\infty} \lambda^{n-1} G_t^{(n)}
-$$
+```
 
 其中 $`\lambda \in [0, 1]`$ 是衰减参数。**权重归一化验证：**
 
-$$
+```math
 (1 - \lambda) \sum_{n=1}^{\infty} \lambda^{n-1} = (1 - \lambda) \cdot \frac{1}{1 - \lambda} = 1
-$$
+```
 
 因此 $`G_t^\lambda`$ 确实是各 $`G_t^{(n)}`$ 的凸组合。当 $`\lambda = 0`$ 时，$`G_t^\lambda = G_t^{(1)}`$（纯 TD）；当 $`\lambda = 1`$ 时，$`G_t^\lambda = G_t^{(\infty)}`$（蒙特卡洛回报）。
 
@@ -2165,9 +2165,9 @@ $`\lambda`$-return 还有一个等价的后向视角（backward view）表述，
 
 仿照 $`\lambda`$-return 对 n-step 回报的加权方式，定义 GAE 为各 k-step 优势估计器的指数加权平均：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{k=1}^{\infty} \lambda^{k-1} \hat{A}_t^{(k)}
-$$
+```
 
 其中 $`(1-\lambda)`$ 确保权重归一化（验证同 4.4.1 节），$`\lambda \in [0, 1]`$ 是新引入的调节参数。
 
@@ -2177,36 +2177,36 @@ $$
 
 将 $`\hat{A}_t^{(k)} = \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V`$ 代入上式：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{k=1}^{\infty} \lambda^{k-1} \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V
-$$
+```
 
 现在需要交换两个求和的顺序。注意内层求和的条件是 $`0 \leq l \leq k-1`$，即 $`l < k`$，等价于 $`k > l`$，即 $`k \geq l+1`$。因此交换后外层对 $`l`$ 从 $`0`$ 到 $`\infty`$ 求和，内层对 $`k`$ 从 $`l+1`$ 到 $`\infty`$ 求和：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{l=0}^{\infty} \gamma^l \delta_{t+l}^V \sum_{k=l+1}^{\infty} \lambda^{k-1}
-$$
+```
 
 计算内层几何级数。令 $`m = k - 1`$，则当 $`k = l+1`$ 时 $`m = l`$，于是：
 
-$$
+```math
 \sum_{k=l+1}^{\infty} \lambda^{k-1} = \sum_{m=l}^{\infty} \lambda^m = \frac{\lambda^l}{1 - \lambda}
-$$
+```
 
 代回原式：
 
-$$
+```math
 \begin{aligned}
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} &= (1 - \lambda) \sum_{l=0}^{\infty} \gamma^l \delta_{t+l}^V \cdot \frac{\lambda^l}{1 - \lambda} \\
 &= \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}^V
 \end{aligned}
-$$
+```
 
 $`(1-\lambda)`$ 与 $`1/(1-\lambda)`$ 恰好约去。**这就是 GAE 的简洁闭式表达：**
 
-$$
+```math
 \boxed{\hat{A}_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \, \delta_{t+l}^V}
-$$
+```
 
 注意有效折扣因子变成了 $`\gamma\lambda`$ 而非 $`\gamma`$。这意味着 $`\lambda`$ 直接控制了 TD 残差累加的衰减速率：$`\lambda`$ 越小，远处的 $`\delta`$ 被压制得越快，估计越偏向短视（低方差、高偏差）；$`\lambda`$ 越大，远处的 $`\delta`$ 保留得越多，估计越偏向长远（高方差、低偏差）。
 
@@ -2216,17 +2216,17 @@ $$
 
 **情形 1：$`\lambda = 0`$。** 此时 $`(\gamma \lambda)^l = 0`$ 对所有 $`l \geq 1`$ 成立，仅剩 $`l=0`$ 项：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, 0)} = \delta_t^V = \hat{A}_t^{(1)}
-$$
+```
 
 退化为纯 TD 优势估计。方差最小，偏差最大，完全依赖 critic 的质量。
 
 **情形 2：$`\lambda = 1`$。** 此时 $`(\gamma \lambda)^l = \gamma^l`$：
 
-$$
+```math
 \hat{A}_t^{\text{GAE}(\gamma, 1)} = \sum_{l=0}^{\infty} \gamma^l \delta_{t+l}^V = \hat{A}_t^{(\infty)} = \sum_{l=0}^{\infty} \gamma^l r_{t+l} - V(s_t)
-$$
+```
 
 退化为蒙特卡洛优势估计。无偏（当 $`V(s_t)`$ 准确时），方差最大，critic 仅作为基线减少方差。
 
@@ -2251,19 +2251,19 @@ $$
 
 GAE 的级数形式 $`\hat{A}_t = \sum_{l=0}^{\infty} (\gamma\lambda)^l \delta_{t+l}^V`$ 虽然数学上优美，但不适合直接计算。将其改写为递推形式：
 
-$$
+```math
 \begin{aligned}
 \hat{A}_t &= \delta_t^V + (\gamma\lambda) \delta_{t+1}^V + (\gamma\lambda)^2 \delta_{t+2}^V + \cdots \\
 &= \delta_t^V + \gamma\lambda \left( \delta_{t+1}^V + (\gamma\lambda) \delta_{t+2}^V + \cdots \right) \\
 &= \delta_t^V + \gamma\lambda \, \hat{A}_{t+1}
 \end{aligned}
-$$
+```
 
 即：
 
-$$
+```math
 \boxed{\hat{A}_t = \delta_t^V + \gamma\lambda \, \hat{A}_{t+1}}
-$$
+```
 
 这个递推关系意味着我们可以**从后向前**遍历一次 rollout 来计算所有时间步的优势估计。具体地，对于一个长度为 $`T`$ 的 rollout，我们从 $`t = T-1`$ 开始，设 $`\hat{A}_T = 0`$（episode 边界条件，详见下文），然后依次计算 $`\hat{A}_{T-1}, \hat{A}_{T-2}, \dots, \hat{A}_0`$。每一步只需常数时间，总体复杂度为 $`O(T)`$。
 
@@ -2273,9 +2273,9 @@ $$
 
 有了优势估计 $`\hat{A}_t`$，我们可以自然地为 critic 网络构造回归目标。由于 $`\hat{A}_t \approx Q^\pi(s_t, a_t) - V(s_t)`$，可得：
 
-$$
+```math
 V_t^{\text{target}} = \hat{A}_t + V(s_t)
-$$
+```
 
 这被称为 $`\lambda`$-return 目标（因为它等价于用 $`\lambda`$-return 作为 $`V(s_t)`$ 的训练目标）。在实践中，我们用 $`V_t^{\text{target}}`$ 作为 critic 网络的监督信号，通过最小化 $`(V_\phi(s_t) - V_t^{\text{target}})^2`$ 来更新 critic 参数 $`\phi`$。
 
@@ -2306,9 +2306,9 @@ $$
 
 在实践中，计算完 $`\hat{A}_t`$ 后通常会对其进行归一化：
 
-$$
+```math
 \tilde{A}_t = \frac{\hat{A}_t - \mu_A}{\sigma_A}
-$$
+```
 
 其中 $`\mu_A`$ 和 $`\sigma_A`$ 是当前 mini-batch 内所有 $`\hat{A}_t`$ 的均值和标准差。这一步的作用有三：
 
@@ -2324,9 +2324,9 @@ $$
 
 这一点的数学本质值得再次强调。设 $`d_t \in \{0, 1\}`$ 表示时刻 $`t`$ 是否为真正终止（$`d_t = 1`$ 表示终止），则统一的 TD 残差写法为：
 
-$$
+```math
 \delta_t^V = r_t + \gamma (1 - d_t) V(s_{t+1}) - V(s_t)
-$$
+```
 
 当 $`d_t = 1`$（终止）时，$`\delta_t^V = r_t - V(s_t)`$；当 $`d_t = 0`$（正常转移或截断）时，$`\delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)`$。截断时 $`d_t = 0`$，因此仍然 bootstrap——这在数学上是正确的，因为截断并不改变 MDP 的价值函数定义，只是限制了我们的观测窗口。
 
@@ -2403,23 +2403,23 @@ $$
 
 设我们希望计算期望 $`\mathbb{E}_{x \sim q}[f(x)]`$，但只能从另一个分布 $`p`$ 中获取样本。假设 $`p`$ 的支撑覆盖 $`q`$ 的支撑，即对所有满足 $`q(x) > 0`$ 的 $`x`$ 都有 $`p(x) > 0`$。定义**重要性比（importance ratio）** 为：
 
-$$
+```math
 r(x) = \frac{q(x)}{p(x)}.
-$$
+```
 
 则有如下恒等式：
 
-$$
+```math
 \mathbb{E}_{x \sim p}\left[r(x) f(x)\right] = \int p(x) \cdot \frac{q(x)}{p(x)} \cdot f(x) \, dx = \int q(x) f(x) \, dx = \mathbb{E}_{x \sim q}[f(x)].
-$$
+```
 
 上述推导的关键步骤是在积分中乘除 $`q(x)/p(x)`$，然后交换测度。这要求 $`p(x) > 0`$ 在 $`q(x) > 0`$ 的所有点上成立；若存在 $`q(x) > 0`$ 但 $`p(x) = 0`$ 的点，则该点贡献被遗漏，估计量产生系统性偏差。因此在支撑条件满足时，IS 估计量是**严格无偏**的。
 
 给定 $`N`$ 个独立同分布样本 $`x_i \sim p`$，IS 估计量为：
 
-$$
+```math
 \hat{\mu}_N = \frac{1}{N} \sum_{i=1}^{N} r(x_i) f(x_i).
-$$
+```
 
 由上述恒等式，$`\mathbb{E}[\hat{\mu}_N] = \mathbb{E}_{x \sim q}[f(x)]`$，无偏性得证。
 
@@ -2429,17 +2429,17 @@ $$
 
 虽然 IS 估计量无偏，其方差却可能极大甚至无穷。展开方差表达式：
 
-$$
+```math
 \text{Var}_p\left[r(X)f(X)\right] = \mathbb{E}_p\left[r(X)^2 f(X)^2\right] - \left(\mathbb{E}_q[f(X)]\right)^2 = \int \frac{q(x)^2}{p(x)} f(x)^2 \, dx - \mu_q^2.
-$$
+```
 
 当 $`q/p`$ 在某些区域取值很大且 $`p`$ 在这些区域的概率密度很小时，被积函数 $`q^2/p`$ 可以发散，导致方差无界。直观地说，如果行为策略 $`p`$ 很少访问目标策略 $`q`$ 认为重要的区域，那么偶尔落入这些区域的样本将获得极大的权重 $`r(x)`$，使估计量剧烈波动。这就是**方差爆炸**问题，也是后续所有「限制策略更新幅度」方法的根本动机。
 
 实践中常用**有效样本量（Effective Sample Size, ESS）** 作为诊断指标：
 
-$$
+```math
 \text{ESS} = \frac{\left(\sum_{i=1}^{N} w_i\right)^2}{\sum_{i=1}^{N} w_i^2},
-$$
+```
 
 其中 $`w_i = r(x_i)`$ 为非归一化权重。ESS 的取值范围为 $`[1, N]`$：当所有权重相等时 $`\text{ESS} = N`$（理想情况），当权重集中于单个样本时 $`\text{ESS} \approx 1`$（退化情况）。ESS 远小于 $`N`$ 表明 IS 估计不可靠。
 
@@ -2453,9 +2453,9 @@ $$
 
 在强化学习中，我们希望用旧策略 $`\pi_{\theta_\text{old}}`$ 采集的轨迹来估计新策略 $`\pi_\theta`$ 的目标函数或梯度。最直接的想法是使用完整轨迹的重要性比：
 
-$$
+```math
 \rho(\tau) = \prod_{t=0}^{T-1} \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_\text{old}}(a_t|s_t)}.
-$$
+```
 
 然而这个乘积的方差随时间步 $`T`$ **指数级增长**。粗略分析如下：若每步比率 $`r_t`$ 独立且 $`\text{Var}(r_t) = \sigma^2`$，则 $`\text{Var}(\prod_t r_t) \approx (1+\sigma^2)^T - 1`$，呈指数增长。即使各步比率不完全独立，在实际 MDP 中这种指数趋势依然显著。因此轨迹级别的 IS 在 horizon 稍大时完全不可用。
 
@@ -2465,15 +2465,15 @@ $$
 
 幸运的是，策略梯度定理（见第 3 章）告诉我们：
 
-$$
+```math
 \nabla J(\theta) = \mathbb{E}_{s \sim d^\pi, a \sim \pi_\theta}\left[\nabla_\theta \log \pi_\theta(a|s) \cdot Q^\pi(s,a)\right].
-$$
+```
 
 注意这里的状态分布是 $`d^\pi`$，即当前策略 $`\pi_\theta`$ 自身的稳态（或折扣加权）状态分布。当我们用 $`\pi_{\theta_\text{old}}`$ 的样本来估计上式时，只需对动作采样做修正：
 
-$$
+```math
 \mathbb{E}_{s \sim d^{\pi_\text{old}}, a \sim \pi_{\theta_\text{old}}}\left[\frac{\pi_\theta(a|s)}{\pi_{\theta_\text{old}}(a|s)} \nabla_\theta \log \pi_\theta(a|s) \cdot Q^{\pi_\text{old}}(s,a)\right].
-$$
+```
 
 这里只出现了**单步比率** $`r_t(\theta) = \pi_\theta(a_t|s_t)/\pi_{\theta_\text{old}}(a_t|s_t)`$，避免了轨迹比率的指数方差。
 
@@ -2489,9 +2489,9 @@ $$
 
 **性能差异引理**（Kakade & Langford, 2002）给出了任意两个策略 $`\pi`$ 和 $`\pi'`$ 之间期望回报差的精确表达式：
 
-$$
+```math
 J(\pi') - J(\pi) = \mathbb{E}_{s \sim d^{\pi'}}\left[\sum_{a} \pi'(a|s) A^\pi(s,a)\right],
-$$
+```
 
 其中 $`d^{\pi'}`$ 是新策略 $`\pi'`$ 的折扣加权状态访问频率，$`A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)`$ 是旧策略 $`\pi`$ 的优势函数。
 
@@ -2501,41 +2501,41 @@ $$
 
 我们从回报的定义出发。记 $`G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k}`$ 为从时刻 $`t`$ 开始的折扣回报。对于策略 $`\pi'`$ 产生的轨迹，有：
 
-$$
+```math
 V^{\pi'}(s_0) = \mathbb{E}_{\tau \sim \pi'}[G_0 | s_0].
-$$
+```
 
 考虑沿 $`\pi'`$ 轨迹的 telescoping 分解。注意到：
 
-$$
+```math
 V^{\pi'}(s_t) = \mathbb{E}_{\tau \sim \pi'}[G_t | s_t],
-$$
+```
 
 因此 $`G_t - V^{\pi'}(s_t)`$ 是一个均值为零的鞅差序列。但更有用的是将 $`V^\pi`$ 而非 $`V^{\pi'}`$ 插入 telescoping：
 
-$$
+```math
 V^{\pi'}(s_0) - V^\pi(s_0) = \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty} \gamma^t \left(r_t + \gamma V^\pi(s_{t+1}) - V^\pi(s_t)\right)\right].
-$$
+```
 
 **验证此式**：展开右边求和，得到
 
-$$
+```math
 \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty} \gamma^t r_t + \sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t)\right].
-$$
+```
 
 后两项构成 telescoping 级数：$`\sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t) = -V^\pi(s_0)`$（因为 $`\lim_{T\to\infty} \gamma^T V^\pi(s_T) = 0`$，假定 $`\gamma < 1`$ 且 $`V^\pi`$ 有界）。因此右边等于 $`\mathbb{E}_{\tau \sim \pi'}[G_0] - V^\pi(s_0) = V^{\pi'}(s_0) - V^\pi(s_0)`$，恒等式成立。
 
 接下来，注意到括号内的表达式正是 TD 误差 $`\delta_t = r_t + \gamma V^\pi(s_{t+1}) - V^\pi(s_t)`$，而由第 2 章结论，$`\mathbb{E}[\delta_t | s_t, a_t] = A^\pi(s_t, a_t)`$。因此：
 
-$$
+```math
 V^{\pi'}(s_0) - V^\pi(s_0) = \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty} \gamma^t A^\pi(s_t, a_t)\right].
-$$
+```
 
 对初始状态 $`s_0 \sim \rho_0`$ 取期望，并将轨迹期望改写为状态-动作边际分布的形式：
 
-$$
+```math
 J(\pi') - J(\pi) = \sum_{t=0}^{\infty} \gamma^t \mathbb{E}_{s_t \sim d_t^{\pi'}, a_t \sim \pi'}\left[A^\pi(s_t, a_t)\right] = \mathbb{E}_{s \sim d^{\pi'}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right],
-$$
+```
 
 其中 $`d^{\pi'}(s) = (1-\gamma)\sum_{t=0}^{\infty} \gamma^t d_t^{\pi'}(s)`$ 为折扣加权状态分布（归一化为概率分布）。引理得证。
 
@@ -2557,33 +2557,33 @@ $$
 
 由性能差异引理：
 
-$$
+```math
 J(\pi') - J(\pi) = \mathbb{E}_{s \sim d^{\pi'}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right].
-$$
+```
 
 我们希望将其中的 $`d^{\pi'}`$ 替换为可计算的 $`d^\pi`$。为此引入替代目标：
 
-$$
+```math
 \eta(\pi') = \mathbb{E}_{s \sim d^{\pi}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right].
-$$
+```
 
 注意 $`\eta(\pi')`$ 只涉及旧策略的状态分布 $`d^\pi`$，可以用旧策略采集的样本通过重要性采样估计。定义近似目标函数：
 
-$$
+```math
 L_\pi(\pi') = J(\pi) + \eta(\pi').
-$$
+```
 
 现在量化 $`J(\pi') - L_\pi(\pi')`$ 的误差。由性能差异引理和 $`\eta`$ 的定义：
 
-$$
+```math
 J(\pi') - L_\pi(\pi') = \mathbb{E}_{s \sim d^{\pi'}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right] - \mathbb{E}_{s \sim d^{\pi}}\left[\sum_a \pi'(a|s) A^\pi(s,a)\right].
-$$
+```
 
 记 $`f(s) = \sum_a \pi'(a|s) A^\pi(s,a)`$，则误差为 $`(d^{\pi'} - d^\pi)^T f`$。Schulman et al. (2015) 证明了以下关键不等式：
 
-$$
+```math
 \left|J(\pi') - L_\pi(\pi')\right| \leq C \cdot \max_s D_\text{KL}\left(\pi'(\cdot|s) \| \pi(\cdot|s)\right),
-$$
+```
 
 其中 $`C = \frac{4\varepsilon\gamma}{(1-\gamma)^2}`$，$`\varepsilon = \max_{s,a} |A^\pi(s,a)|`$。
 
@@ -2595,9 +2595,9 @@ $$
 
 由上述误差界，直接得到：
 
-$$
+```math
 J(\pi') \geq L_\pi(\pi') - C \cdot \max_s D_\text{KL}\left(\pi'(\cdot|s) \| \pi(\cdot|s)\right).
-$$
+```
 
 记右端为 $`\underline{J}_\pi(\pi')`$，它是 $`J(\pi')`$ 的一个**可计算下界**。
 
@@ -2623,9 +2623,9 @@ $$
 
 将上述理论转化为实际算法，TRPO 求解如下约束优化：
 
-$$
+```math
 \max_\theta \quad \mathbb{E}_{s \sim d^{\pi_{\theta_\text{old}}}, a \sim \pi_{\theta_\text{old}}}\left[r_t(\theta) \cdot \hat{A}_t\right] \quad \text{s.t.} \quad \mathbb{E}_{s \sim d^{\pi_{\theta_\text{old}}}}\left[D_\text{KL}\left(\pi_{\theta_\text{old}}(\cdot|s) \| \pi_\theta(\cdot|s)\right)\right] \leq \delta,
-$$
+```
 
 其中 $`r_t(\theta) = \pi_\theta(a_t|s_t)/\pi_{\theta_\text{old}}(a_t|s_t)`$ 为单步重要性比，$`\hat{A}_t`$ 为 GAE 优势估计（见第 4 章），$`\delta`$ 为预设的 KL 阈值（通常取 0.01）。
 
@@ -2657,9 +2657,9 @@ $$
 
 其中 $`F(\theta)`$ 即为 **Fisher 信息矩阵**。因此：
 
-$$
+```math
 D_\text{KL}(\pi_\theta \| \pi_{\theta+\Delta\theta}) \approx \frac{1}{2} \Delta\theta^\top F(\theta) \Delta\theta.
-$$
+```
 
 这说明 Fisher 矩阵定义了参数空间中 KL 散度的**局部二次近似**，即以 Fisher 度量的二次型来衡量分布间的距离。
 
@@ -2669,21 +2669,21 @@ $$
 
 现在我们求解如下约束优化：在 KL 球内找到使目标增长最快的方向：
 
-$$
+```math
 \max_{\Delta\theta} \quad g^\top \Delta\theta \quad \text{s.t.} \quad \frac{1}{2} \Delta\theta^\top F \Delta\theta \leq \delta,
-$$
+```
 
 其中 $`g = \nabla_\theta J(\theta)`$ 为标准策略梯度。构造拉格朗日函数：
 
-$$
+```math
 \mathcal{L}(\Delta\theta, \lambda) = g^\top \Delta\theta - \lambda \left(\frac{1}{2} \Delta\theta^\top F \Delta\theta - \delta\right).
-$$
+```
 
 对 $`\Delta\theta`$ 求导令其为零：$`g - \lambda F \Delta\theta = 0`$，解得 $`\Delta\theta = \frac{1}{\lambda} F^{-1} g`$。代入约束的等式边界 $`\frac{1}{2}\Delta\theta^\top F \Delta\theta = \delta`$ 可确定 $`\lambda`$，但方向已经确定：
 
-$$
+```math
 \Delta\theta \propto F^{-1} g.
-$$
+```
 
 这就是**自然梯度（natural gradient）**：$`\tilde{\nabla} J(\theta) = F(\theta)^{-1} \nabla J(\theta)`$。它是在 KL 约束下使目标增长最快的方向，且与参数化选择无关（Fisher 矩阵在重参数化下协变变换，使得 $`F^{-1}g`$ 的方向不变）。
 
@@ -2695,15 +2695,15 @@ $$
 
 **对角 Gaussian 策略**：设 $`\pi = \mathcal{N}(\mu, \text{diag}(\sigma^2))`$，$`\pi' = \mathcal{N}(\mu', \text{diag}(\sigma'^2))`$，维度为 $`d`$，则：
 
-$$
+```math
 D_\text{KL}(\pi \| \pi') = \sum_{i=1}^{d} \left[\log\frac{\sigma'_i}{\sigma_i} + \frac{\sigma_i^2 + (\mu_i - \mu'_i)^2}{2\sigma'^2_i} - \frac{1}{2}\right].
-$$
+```
 
 **Categorical 策略**：设 $`\pi(a) = p_a`$，$`\pi'(a) = q_a`$，则：
 
-$$
+```math
 D_\text{KL}(\pi \| \pi') = \sum_a p_a \log \frac{p_a}{q_a}.
-$$
+```
 
 这两个公式均可直接微分以计算 KL 约束的梯度与 Hessian-vector product。
 
@@ -2729,9 +2729,9 @@ Fisher 矩阵 $`F`$ 的大小为 $`n \times n`$，其中 $`n`$ 是策略网络�
 
 $`Fv`$ 的计算利用以下恒等式。记 $`g(\theta) = \nabla_\theta J(\theta)`$，则：
 
-$$
+```math
 F(\theta) v = \nabla_\theta \left(g(\theta)^\top v\right),
-$$
+```
 
 这是因为 $`F = \mathbb{E}[\nabla \log \pi \nabla \log \pi^\top]`$ 且 $`\nabla(g^\top v) = \nabla(\mathbb{E}[\cdots]^\top v) = \mathbb{E}[\nabla(\nabla \log \pi^\top v)] = Fv`$（在 $`v`$ 与 $`\theta`$ 无关时）。实际操作中：先计算标量 $`g^\top v`$（一次前向+反向传播），再对该标量关于 $`\theta`$ 求梯度（又一次反向传播），总代价约为两次梯度计算，远低于构造 $`F`$。
 
@@ -2824,15 +2824,15 @@ PPO 的设计目标正是用**一阶优化方法**（SGD/Adam）达到「近似�
 
 PPO-Clip 的核心是一个经过裁剪的替代目标函数（clipped surrogate objective）。设当前策略参数为 $`\theta`$，采集数据时的旧策略参数为 $`\theta_{\text{old}}`$，定义重要性采样比率：
 
-$$
+```math
 r_t(\theta) = \frac{\pi_\theta(a_t | s_t)}{\pi_{\theta_{\text{old}}}(a_t | s_t)}
-$$
+```
 
 其中 $`(s_t, a_t)`$ 来自旧策略 $`\pi_{\theta_{\text{old}}}`$ 生成的 rollout 数据。$`\hat{A}_t`$ 是由第 4 章 GAE 方法计算得到的优势估计。PPO-Clip 的目标函数为：
 
-$$
+```math
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t, \; \text{clip}\big(r_t(\theta), 1-\varepsilon, 1+\varepsilon\big) \hat{A}_t \right) \right]
-$$
+```
 
 其中 $`\text{clip}(x, l, u) = \max(l, \min(x, u))`$ 将 $`x`$ 截断到区间 $`[l, u]`$ 内，$`\varepsilon > 0`$ 是裁剪半径（典型取值 0.1～0.3，常用 0.2）。$`\mathbb{E}_t`$ 表示对时间步 $`t`$ 在 rollout 数据上的经验平均。
 
@@ -2875,9 +2875,9 @@ PPO-Clip 最容易被误解的点在于其**不对称性**：它只阻止朝有�
 
 从优化角度看，$`L^{\text{CLIP}}(\theta)`$ 是真实替代目标 $`L^{\text{SURR}}(\theta) = \mathbb{E}_t[r_t(\theta)\hat{A}_t]`$ 的一个**逐点下界**：对于每个样本 $`t`$，都有
 
-$$
+```math
 \min\big(r_t(\theta)\hat{A}_t, \; \text{clip}(r_t(\theta), 1-\varepsilon, 1+\varepsilon)\hat{A}_t\big) \leq r_t(\theta)\hat{A}_t
-$$
+```
 
 因此 $`L^{\text{CLIP}}(\theta) \leq L^{\text{SURR}}(\theta)`$。最大化一个下界是安全的：如果下界提升了，真实目标至少不会更差（在局部近似成立的范围内）。这就是"悲观"的含义——我们宁可低估收益，也不愿高估后过度乐观地迈出太大一步。
 
@@ -2893,15 +2893,15 @@ $$
 
 当 $`\theta = \theta_{\text{old}}`$ 时，$`r_t(\theta) = 1`$，对所有 $`t`$ 成立。由于 $`1 \in [1-\varepsilon, 1+\varepsilon]`$（只要 $`\varepsilon > 0`$），clip 不生效，即 $`\text{clip}(1, 1-\varepsilon, 1+\varepsilon) = 1`$。此时两项相等：
 
-$$
+```math
 \min(1 \cdot \hat{A}_t, \; 1 \cdot \hat{A}_t) = \hat{A}_t
-$$
+```
 
 因此在 $`\theta = \theta_{\text{old}}`$ 的一个邻域内（$`r_t`$ 尚未离开 $`[1-\varepsilon, 1+\varepsilon]`$），$`L^{\text{CLIP}}(\theta)`$ 与 $`L^{\text{SURR}}(\theta)`$ 完全一致，其梯度为：
 
-$$
+```math
 \nabla_\theta L^{\text{CLIP}}(\theta)\big|_{\theta=\theta_{\text{old}}} = \mathbb{E}_t \left[ \nabla_\theta r_t(\theta)\big|_{\theta=\theta_{\text{old}}} \cdot \hat{A}_t \right] = \mathbb{E}_t \left[ \nabla_\theta \log \pi_\theta(a_t|s_t)\big|_{\theta=\theta_{\text{old}}} \cdot \hat{A}_t \right]
-$$
+```
 
 这正是第 3 章策略梯度定理给出的形式（用 $`\hat{A}_t`$ 替代 $`Q^\pi`$ 作为无偏估计）。这保证了 PPO-Clip 在更新起点处的搜索方向与策略梯度一致，clip 仅在偏离起点足够远时才介入。
 
@@ -2915,9 +2915,9 @@ $$
 
 PPO 的另一种变体保留了完整的替代目标形式，但将信任域约束转化为惩罚项加入目标函数：
 
-$$
+```math
 L^{\text{KLPEN}}(\theta) = \mathbb{E}_t \left[ r_t(\theta) \hat{A}_t \right] - \beta \cdot \mathbb{E}_t \left[ D_{\text{KL}}\big(\pi_{\theta_{\text{old}}}(\cdot|s_t) \;\|\; \pi_\theta(\cdot|s_t)\big) \right]
-$$
+```
 
 其中 $`\beta > 0`$ 是 KL 惩罚系数，$`D_{\text{KL}}`$ 的定义见第 1 章。与 TRPO 的区别在于：TRPO 将 KL 作为硬约束（$`\leq \delta`$），而 PPO-Penalty 将其作为软惩罚项，并通过自适应机制调节 $`\beta`$。
 
@@ -2929,13 +2929,13 @@ $$
 
 在每个 epoch（或每若干步）结束后，计算当前批次数据上的平均 KL 散度 $`d = \mathbb{E}_t[D_{\text{KL}}]`$，然后按如下规则更新 $`\beta`$：
 
-$$
+```math
 \beta \leftarrow \begin{cases}
 \beta / 2 & \text{if } d < d_{\text{targ}} / 1.5 \\
 \beta \times 2 & \text{if } d > d_{\text{targ}} \times 1.5 \\
 \beta & \text{otherwise}
 \end{cases}
-$$
+```
 
 其中 $`d_{\text{targ}}`$ 是目标 KL 散度，通常设为 0.01～0.02。$`\beta`$ 的初始值通常设为 1。这个规则的直觉是：如果实际 KL 远低于目标，说明约束过紧，放松惩罚以加速学习；如果实际 KL 远高于目标，说明约束过松，加强惩罚以防止过大更新。乘法因子 2 和阈值因子 1.5 提供了足够的滞后带（hysteresis），避免 $`\beta`$ 在临界值附近频繁振荡。
 
@@ -2964,9 +2964,9 @@ $$
 
 PPO 的实际优化目标不仅包含策略项，还包含价值函数拟合项和熵正则项。完整的单步损失为：
 
-$$
+```math
 L_t^{\text{PPO}}(\theta, \phi) = L_t^{\text{CLIP}}(\theta) - c_1 \, L_t^{\text{VF}}(\phi) + c_2 \, S[\pi_\theta](s_t)
-$$
+```
 
 其中 $`\phi`$ 是价值网络（critic）的参数，$`c_1, c_2 > 0`$ 是权重系数。下面逐项解释。
 
@@ -2974,9 +2974,9 @@ $$
 
 **价值函数项 $`L_t^{\text{VF}}(\phi)`$**：critic 的均方误差回归损失：
 
-$$
+```math
 L_t^{\text{VF}}(\phi) = \big(V_\phi(s_t) - V_t^{\text{target}}\big)^2
-$$
+```
 
 其中 $`V_t^{\text{target}} = \hat{A}_t + V_{\phi_{\text{old}}}(s_t)`$ 是利用第 4 章 λ-return 构造的价值目标。这里用 $`V_{\phi_{\text{old}}}`$ 而非 $`V_\phi`$ 来计算目标，是为了在 mini-batch 更新过程中保持目标的稳定性（类似于 TD 学习中的 target network 思想）。$`L^{\text{VF}}`$ 本身是要最小化的，所以在总 loss 中以正号出现（前面已有负号的策略项与之方向相反）。
 
@@ -2996,9 +2996,9 @@ $$
 
 PPO 原论文提到了一个价值函数裁剪（value function clipping）变体：
 
-$$
+```math
 L_t^{\text{VF,clip}}(\phi) = \max\!\left( \big(V_\phi(s_t) - V_t^{\text{target}}\big)^2, \; \big(\text{clip}(V_\phi(s_t), V_{\phi_{\text{old}}}(s_t)-\varepsilon, V_{\phi_{\text{old}}}(s_t)+\varepsilon) - V_t^{\text{target}}\big)^2 \right)
-$$
+```
 
 其动机与策略裁剪类似：限制价值网络的更新幅度，防止 critic 在某些状态下产生过大的预测跳变。注意这里用的是 $`\max`$ 而非 $`\min`$，因为价值函数损失是最小化目标，$`\max`$ 取两者中较大的损失值，相当于对价值更新施加了一个保守的上界。
 
@@ -3138,9 +3138,9 @@ Andrychowicz et al. (2021) 的大规模实证研究得出了一个重要结论�
 
 PPO 在 LLM 上是**逐 token** 应用的，而非逐句或逐段。对于生成序列 $`y = (y_1, y_2, \ldots, y_T)`$，给定输入 $`x`$，每一步的比率为：
 
-$$
+```math
 r_t(\theta) = \frac{\pi_\theta(y_t | x, y_{<t})}{\pi_{\theta_{\text{old}}}(y_t | x, y_{<t})}
-$$
+```
 
 其中 $`\pi_\theta(y_t | x, y_{<t})`$ 是语言模型在给定前缀条件下生成 token $`y_t`$ 的条件概率。优势 $`\hat{A}_t`$ 同样逐 token 计算，通常使用 GAE 或直接使用奖励模型的输出作为终端奖励进行反向传播。
 
@@ -3152,9 +3152,9 @@ RLHF 中的 PPO 包含**两个不同层面**的 KL 相关机制，这是最常�
 
 **第一个 KL：奖励塑形中的 KL 惩罚**。在计算奖励时，从奖励模型的输出中减去一个 KL 惩罚项：
 
-$$
+```math
 \tilde{r}_t = R_\phi(x, y_t, y_{<t}) - \beta_{\text{reward}} \cdot D_{\text{KL}}\big(\pi_\theta(\cdot|x,y_{<t}) \;\|\; \pi_{\text{ref}}(\cdot|x,y_{<t})\big)
-$$
+```
 
 这里的 $`\pi_{\text{ref}}`$ 是 SFT 模型，$`\beta_{\text{reward}}`$ 是奖励层面的 KL 系数。这个 KL 惩罚的作用是**防止 reward hacking**：如果没有它，策略会学会生成奖励模型打分高但实际质量差的文本（例如重复特定短语、输出退化格式），因为奖励模型只是在有限的人类偏好数据上训练的近似器，必然存在漏洞。KL 惩罚将策略锚定在 SFT 模型附近，确保生成的文本不会偏离太远。
 
@@ -3272,9 +3272,9 @@ Gymnasium 是 OpenAI Gym 的官方继任者，提供了标准化的强化学习�
 
 对应第 4 章的 TD 误差 $`\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)`$，正确的写法应为：
 
-$$
+```math
 \delta_t = r_t + \gamma \cdot (1 - \text{terminated}_t) \cdot V(s_{t+1}) - V(s_t)
-$$
+```
 
 注意这里只屏蔽 `terminated`，不屏蔽 `truncated`。一个常见的错误写法是 `nextnonterminal = 1.0 - dones[t+1]`，其中 `dones = terminated | truncated`——这会在 truncated 时也把 bootstrap 项置零，等价于把截断误认为终止。**这是 PPO 实现中最隐蔽且影响最大的 bug 之一。**
 
@@ -3725,9 +3725,9 @@ def get_lr(base_lr, current_step, total_steps):
 
 `torch.nn.utils.clip_grad_norm_(params, max_grad_norm=0.5)` 裁剪的是所有参数梯度的**全局 L2 范数**：
 
-$$
+```math
 \|g\|_2 = \sqrt{\sum_i g_i^2}
-$$
+```
 
 若 $`\|g\|_2 > \text{max\_grad\_norm}`$，则将所有梯度分量等比例缩放至 $`\text{max\_grad\_norm}`$。这与 PPO-Clip 中 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)`$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
 
@@ -3811,9 +3811,9 @@ $$
 
 **观测归一化（Observation Normalization）**：使用 Welford 在线算法维护 running mean/std：
 
-$$
+```math
 \bar{x}_n = \bar{x}_{n-1} + \frac{x_n - \bar{x}_{n-1}}{n}, \quad M_n = M_{n-1} + (x_n - \bar{x}_{n-1})(x_n - \bar{x}_n)
-$$
+```
 
 其中 $`\sigma_n = \sqrt{M_n / n}`$。PPO 对观测归一化极其敏感，尤其是多环境并行时，统计量必须用**全体环境的数据**更新，而非单个环境。
 
