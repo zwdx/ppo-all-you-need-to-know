@@ -48,7 +48,7 @@ r_t(\theta) = \frac{\pi_\theta(a_t | s_t)}{\pi_{\theta_{\text{old}}}(a_t | s_t)}
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t, \; \text{clip}\big(r_t(\theta), 1-\varepsilon, 1+\varepsilon\big) \hat{A}_t \right) \right]
 ```
 
-其中 $`\text{clip}(x, l, u) = \max(l, \min(x, u))`$ 将 $`x`$ 截断到区间 $`[l, u]`$ 内，$`\varepsilon > 0`$ 是裁剪半径（典型取值 0.1～0.3，常用 0.2）。$`\mathbb{E}_t`$ 表示对时间步 $`t`$ 在 rollout 数据上的经验平均。
+其中 $`\text{clip}(x, l, u) = \max(l, \min(x, u))`$ 将 $`x`$ 截断到区间 $`[l, u]`$ 内，$`\varepsilon \gt  0`$ 是裁剪半径（典型取值 0.1～0.3，常用 0.2）。$`\mathbb{E}_t`$ 表示对时间步 $`t`$ 在 rollout 数据上的经验平均。
 
 这个目标函数包含三个关键组件：
 - **未裁剪项** $`r_t(\theta) \hat{A}_t`$：即第 5 章中的标准替代目标，是真实性能差异 $`J(\pi_\theta) - J(\pi_{\theta_{\text{old}}})`$ 的一阶近似。
@@ -61,25 +61,25 @@ L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t,
 
 ### 6.2.2 六种情形的完整分析
 
-为了理解 clip 与 min 的联合作用，我们需要分 $`\hat{A}_t > 0`$ 和 $`\hat{A}_t < 0`$ 两大情形，每种情形下再按 $`r_t(\theta)`$ 落在三个区间讨论。记 $`r = r_t(\theta)`$，$`A = \hat{A}_t`$，$`c = \text{clip}(r, 1-\varepsilon, 1+\varepsilon)`$。
+为了理解 clip 与 min 的联合作用，我们需要分 $`\hat{A}_t \gt  0`$ 和 $`\hat{A}_t \lt  0`$ 两大情形，每种情形下再按 $`r_t(\theta)`$ 落在三个区间讨论。记 $`r = r_t(\theta)`$，$`A = \hat{A}_t`$，$`c = \text{clip}(r, 1-\varepsilon, 1+\varepsilon)`$。
 
-**情形一：$`A > 0`$（该动作比平均水平好，我们希望增大其概率）**
+**情形一：$`A \gt  0`$（该动作比平均水平好，我们希望增大其概率）**
 
 | $`r`$ 所在区间 | $`c`$ 的值 | $`rA`$ vs $`cA`$ | $`\min`$ 取值 | 梯度 | 行为解释 |
 |:---:|:---:|:---:|:---:|:---:|:---|
-| $`r < 1-\varepsilon`$ | $`1-\varepsilon`$ | $`rA < cA`$（因 $`r < 1-\varepsilon`$） | $`rA`$（未裁剪项） | $`\nabla_\theta r \cdot A \neq 0`$ | 当前概率远低于旧策略，未裁剪项更小被选中，保留完整梯度鼓励增大概率 |
+| $`r \lt  1-\varepsilon`$ | $`1-\varepsilon`$ | $`rA \lt  cA`$（因 $`r \lt  1-\varepsilon`$） | $`rA`$（未裁剪项） | $`\nabla_\theta r \cdot A \neq 0`$ | 当前概率远低于旧策略，未裁剪项更小被选中，保留完整梯度鼓励增大概率 |
 | $`1-\varepsilon \leq r \leq 1+\varepsilon`$ | $`r`$ | $`rA = cA`$ | $`rA = cA`$ | $`\nabla_\theta r \cdot A \neq 0`$ | 比率在安全区间内，两项相等，等价于未裁剪的策略梯度 |
-| $`r > 1+\varepsilon`$ | $`1+\varepsilon`$ | $`rA > cA`$（因 $`r > 1+\varepsilon`$） | $`cA`$（裁剪项） | $`0`$（$`c`$ 对 $`\theta`$ 为常数） | 概率已大幅增加超出安全范围，裁剪项更小被选中，梯度为零，阻止继续增大 |
+| $`r \gt  1+\varepsilon`$ | $`1+\varepsilon`$ | $`rA \gt  cA`$（因 $`r \gt  1+\varepsilon`$） | $`cA`$（裁剪项） | $`0`$（$`c`$ 对 $`\theta`$ 为常数） | 概率已大幅增加超出安全范围，裁剪项更小被选中，梯度为零，阻止继续增大 |
 
-**情形二：$`A < 0`$（该动作比平均水平差，我们希望减小其概率）**
+**情形二：$`A \lt  0`$（该动作比平均水平差，我们希望减小其概率）**
 
 | $`r`$ 所在区间 | $`c`$ 的值 | $`rA`$ vs $`cA`$ | $`\min`$ 取值 | 梯度 | 行为解释 |
 |:---:|:---:|:---:|:---:|:---:|:---|
-| $`r < 1-\varepsilon`$ | $`1-\varepsilon`$ | $`rA > cA`$（因 $`A<0`$，$`r<1-\varepsilon`$ 使 $`rA`$ 负得少） | $`cA`$（裁剪项） | $`0`$ | 概率已大幅减小超出安全范围，裁剪项更小被选中，梯度为零，阻止继续减小 |
+| $`r \lt  1-\varepsilon`$ | $`1-\varepsilon`$ | $`rA \gt  cA`$（因 $`A\lt 0`$，$`r\lt 1-\varepsilon`$ 使 $`rA`$ 负得少） | $`cA`$（裁剪项） | $`0`$ | 概率已大幅减小超出安全范围，裁剪项更小被选中，梯度为零，阻止继续减小 |
 | $`1-\varepsilon \leq r \leq 1+\varepsilon`$ | $`r`$ | $`rA = cA`$ | $`rA = cA`$ | $`\nabla_\theta r \cdot A \neq 0`$ | 比率在安全区间内，等价于未裁剪的策略梯度 |
-| $`r > 1+\varepsilon`$ | $`1+\varepsilon`$ | $`rA < cA`$（因 $`A<0`$，$`r>1+\varepsilon`$ 使 $`rA`$ 负得多） | $`rA`$（未裁剪项） | $`\nabla_\theta r \cdot A \neq 0`$ | 当前概率远高于旧策略但动作实际很差，未裁剪项更小被选中，保留完整梯度鼓励减小概率 |
+| $`r \gt  1+\varepsilon`$ | $`1+\varepsilon`$ | $`rA \lt  cA`$（因 $`A\lt 0`$，$`r\gt 1+\varepsilon`$ 使 $`rA`$ 负得多） | $`rA`$（未裁剪项） | $`\nabla_\theta r \cdot A \neq 0`$ | 当前概率远高于旧策略但动作实际很差，未裁剪项更小被选中，保留完整梯度鼓励减小概率 |
 
-以上六行可以浓缩为一条核心规则：**$`\min`$ 操作总是选择对当前参数更新"更保守"的那一项**。当策略更新方向与优势信号一致（$`A>0`$ 时增大 $`r`$，$`A<0`$ 时减小 $`r`$）且幅度超过 $`\varepsilon`$ 时，裁剪项生效、梯度归零，阻止过度更新；当策略更新方向与优势信号相反（例如 $`A>0`$ 但 $`r`$ 反而变小了），说明当前策略在该状态-动作对上犯了错，此时未裁剪项更小被选中，梯度不受阻碍，允许纠错。
+以上六行可以浓缩为一条核心规则：**$`\min`$ 操作总是选择对当前参数更新"更保守"的那一项**。当策略更新方向与优势信号一致（$`A\gt 0`$ 时增大 $`r`$，$`A\lt 0`$ 时减小 $`r`$）且幅度超过 $`\varepsilon`$ 时，裁剪项生效、梯度归零，阻止过度更新；当策略更新方向与优势信号相反（例如 $`A\gt 0`$ 但 $`r`$ 反而变小了），说明当前策略在该状态-动作对上犯了错，此时未裁剪项更小被选中，梯度不受阻碍，允许纠错。
 
 <a id="s6-2-3"></a>
 
@@ -97,7 +97,7 @@ PPO-Clip 最容易被误解的点在于其**不对称性**：它只阻止朝有�
 
 对比 TRPO 的理论保障：TRPO 通过约束 $`\max_s D_{\text{KL}}`$ 得到了 $`J(\pi') \geq L_\pi(\pi') - C \cdot \max_s D_{\text{KL}}`$ 这一全局下界，其中 $`C`$ 依赖于优势函数的最大绝对值和折扣因子。PPO-Clip 没有这样的全局保证，因为 clip 是对单个样本比率的逐点操作，不等价于对状态级 KL 散度的约束。但在实践中，这种启发式的悲观下界足够有效，且计算成本远低于 TRPO 的二阶优化。
 
-关于不对称性的直觉：当 $`A > 0`$ 且 $`r > 1+\varepsilon`$ 时，策略已经大幅增加了该好动作的概率，继续增加的边际收益递减而风险递增（可能导致其他好动作的概率被挤压），所以截断是合理的。但当 $`A > 0`$ 且 $`r < 1-\varepsilon`$ 时，策略反而降低了好动作的概率，这是一个明确的错误信号，不应该被截断——让梯度自由流动以尽快纠正。同理适用于 $`A < 0`$ 的对称情形。
+关于不对称性的直觉：当 $`A \gt  0`$ 且 $`r \gt  1+\varepsilon`$ 时，策略已经大幅增加了该好动作的概率，继续增加的边际收益递减而风险递增（可能导致其他好动作的概率被挤压），所以截断是合理的。但当 $`A \gt  0`$ 且 $`r \lt  1-\varepsilon`$ 时，策略反而降低了好动作的概率，这是一个明确的错误信号，不应该被截断——让梯度自由流动以尽快纠正。同理适用于 $`A \lt  0`$ 的对称情形。
 
 <a id="s6-2-4"></a>
 
@@ -105,7 +105,7 @@ PPO-Clip 最容易被误解的点在于其**不对称性**：它只阻止朝有�
 
 一个自然的疑问是：在 $`\theta = \theta_{\text{old}}`$ 处，$`L^{\text{CLIP}}`$ 的梯度是否等于标准策略梯度？答案是肯定的。
 
-当 $`\theta = \theta_{\text{old}}`$ 时，$`r_t(\theta) = 1`$，对所有 $`t`$ 成立。由于 $`1 \in [1-\varepsilon, 1+\varepsilon]`$（只要 $`\varepsilon > 0`$），clip 不生效，即 $`\text{clip}(1, 1-\varepsilon, 1+\varepsilon) = 1`$。此时两项相等：
+当 $`\theta = \theta_{\text{old}}`$ 时，$`r_t(\theta) = 1`$，对所有 $`t`$ 成立。由于 $`1 \in [1-\varepsilon, 1+\varepsilon]`$（只要 $`\varepsilon \gt  0`$），clip 不生效，即 $`\text{clip}(1, 1-\varepsilon, 1+\varepsilon) = 1`$。此时两项相等：
 
 ```math
 \min(1 \cdot \hat{A}_t, \; 1 \cdot \hat{A}_t) = \hat{A}_t
@@ -133,7 +133,7 @@ PPO 的另一种变体保留了完整的替代目标形式，但将信任域约�
 L^{\text{KLPEN}}(\theta) = \mathbb{E}_t \left[ r_t(\theta) \hat{A}_t \right] - \beta \cdot \mathbb{E}_t \left[ D_{\text{KL}}\big(\pi_{\theta_{\text{old}}}(\cdot|s_t) \;\|\; \pi_\theta(\cdot|s_t)\big) \right]
 ```
 
-其中 $`\beta > 0`$ 是 KL 惩罚系数，$`D_{\text{KL}}`$ 的定义见第 1 章。与 TRPO 的区别在于：TRPO 将 KL 作为硬约束（$`\leq \delta`$），而 PPO-Penalty 将其作为软惩罚项，并通过自适应机制调节 $`\beta`$。
+其中 $`\beta \gt  0`$ 是 KL 惩罚系数，$`D_{\text{KL}}`$ 的定义见第 1 章。与 TRPO 的区别在于：TRPO 将 KL 作为硬约束（$`\leq \delta`$），而 PPO-Penalty 将其作为软惩罚项，并通过自适应机制调节 $`\beta`$。
 
 <a id="s6-3-2"></a>
 
@@ -182,7 +182,7 @@ PPO 的实际优化目标不仅包含策略项，还包含价值函数拟合项�
 L_t^{\text{PPO}}(\theta, \phi) = L_t^{\text{CLIP}}(\theta) - c_1 \, L_t^{\text{VF}}(\phi) + c_2 \, S[\pi_\theta](s_t)
 ```
 
-其中 $`\phi`$ 是价值网络（critic）的参数，$`c_1, c_2 > 0`$ 是权重系数。下面逐项解释。
+其中 $`\phi`$ 是价值网络（critic）的参数，$`c_1, c_2 \gt  0`$ 是权重系数。下面逐项解释。
 
 **策略项 $`L_t^{\text{CLIP}}(\theta)`$**：即 6.2 节定义的裁剪替代目标。注意这里写的是**最大化**目标，而在实际训练中我们通常构造一个**最小化**的损失函数。因此策略项在 loss 中取负号：$`-L_t^{\text{CLIP}}(\theta)`$。
 
@@ -300,7 +300,7 @@ TRPO 的性能下界 $`J(\pi') \geq L_\pi(\pi') - C \cdot \max_s D_{\text{KL}}(\
 
 ### 6.6.2 梯度截断引入偏差
 
-当 $`r_t(\theta)`$ 被 clip 时（即 $`r_t < 1-\varepsilon`$ 或 $`r_t > 1+\varepsilon`$ 且对应情形下裁剪项被 $`\min`$ 选中），该项对 $`\theta`$ 的梯度为零。这意味着这部分样本的信息被完全丢弃了。从统计估计的角度看，这等价于对梯度估计施加了一个与数据相关的截断，引入了系统性偏差。在理论上，这个偏差的大小与 $`\varepsilon`$ 和策略更新步数 $`K`$ 有关：$`\varepsilon`$ 越小或 $`K`$ 越大，被截断的样本比例越高，偏差越大。但在实践中，适度的偏差换取了方差的显著降低，总体效果是正面的。
+当 $`r_t(\theta)`$ 被 clip 时（即 $`r_t \lt  1-\varepsilon`$ 或 $`r_t \gt  1+\varepsilon`$ 且对应情形下裁剪项被 $`\min`$ 选中），该项对 $`\theta`$ 的梯度为零。这意味着这部分样本的信息被完全丢弃了。从统计估计的角度看，这等价于对梯度估计施加了一个与数据相关的截断，引入了系统性偏差。在理论上，这个偏差的大小与 $`\varepsilon`$ 和策略更新步数 $`K`$ 有关：$`\varepsilon`$ 越小或 $`K`$ 越大，被截断的样本比例越高，偏差越大。但在实践中，适度的偏差换取了方差的显著降低，总体效果是正面的。
 
 <a id="s6-6-3"></a>
 
@@ -356,7 +356,7 @@ PPO 在 LLM 上是**逐 token** 应用的，而非逐句或逐段。对于生成
 r_t(\theta) = \frac{\pi_\theta(y_t | x, y_{<t})}{\pi_{\theta_{\text{old}}}(y_t | x, y_{<t})}
 ```
 
-其中 $`\pi_\theta(y_t | x, y_{<t})`$ 是语言模型在给定前缀条件下生成 token $`y_t`$ 的条件概率。优势 $`\hat{A}_t`$ 同样逐 token 计算，通常使用 GAE 或直接使用奖励模型的输出作为终端奖励进行反向传播。
+其中 $`\pi_\theta(y_t | x, y_{\lt t})`$ 是语言模型在给定前缀条件下生成 token $`y_t`$ 的条件概率。优势 $`\hat{A}_t`$ 同样逐 token 计算，通常使用 GAE 或直接使用奖励模型的输出作为终端奖励进行反向传播。
 
 <a id="s6-7-3"></a>
 
@@ -429,7 +429,7 @@ PPO 的定位可以概括为：**在理论保证与工程简洁性之间取得�
 
 ### 自测题
 
-**题目 1**：当 $`\hat{A}_t > 0`$ 且 $`r_t(\theta) > 1+\varepsilon`$ 时，$`L^{\text{CLIP}}`$ 中哪一项被 $`\min`$ 选中？该项对 $`\theta`$ 的梯度是多少？物理含义是什么？
+**题目 1**：当 $`\hat{A}_t \gt  0`$ 且 $`r_t(\theta) \gt  1+\varepsilon`$ 时，$`L^{\text{CLIP}}`$ 中哪一项被 $`\min`$ 选中？该项对 $`\theta`$ 的梯度是多少？物理含义是什么？
 
 <details>
 <summary>查看参考答案</summary>
@@ -438,12 +438,12 @@ PPO 的定位可以概括为：**在理论保证与工程简洁性之间取得�
 
 </details>
 
-**题目 2**：当 $`\hat{A}_t < 0`$ 且 $`r_t(\theta) < 1-\varepsilon`$ 时，$`\min`$ 选中的是哪一项？为什么这种情况下不阻止更新？
+**题目 2**：当 $`\hat{A}_t \lt  0`$ 且 $`r_t(\theta) \lt  1-\varepsilon`$ 时，$`\min`$ 选中的是哪一项？为什么这种情况下不阻止更新？
 
 <details>
 <summary>查看参考答案</summary>
 
-参考答案：裁剪项 $`(1-\varepsilon)\hat{A}_t`$ 被选中（因为 $`A<0`$ 时 $`(1-\varepsilon)A < rA`$）。梯度为零。等等——重新审视：当 $`A<0`$ 且 $`r<1-\varepsilon`$ 时，$`rA > (1-\varepsilon)A`$（两个负数，$`r`$ 更小使 $`rA`$ 负得少即更大），所以 $`\min`$ 取 $`(1-\varepsilon)A`$，梯度确实为零。这实际上是阻止了"概率已经降得太低还要继续降"的过度更新。题目问"为什么不阻止"的前提有误——PPO 在这种情况下确实阻止了更新。正确理解是：PPO 阻止的是朝任一方向的过度更新，而非仅阻止有利方向。
+参考答案：裁剪项 $`(1-\varepsilon)\hat{A}_t`$ 被选中（因为 $`A\lt 0`$ 时 $`(1-\varepsilon)A \lt  rA`$）。梯度为零。等等——重新审视：当 $`A\lt 0`$ 且 $`r\lt 1-\varepsilon`$ 时，$`rA \gt  (1-\varepsilon)A`$（两个负数，$`r`$ 更小使 $`rA`$ 负得少即更大），所以 $`\min`$ 取 $`(1-\varepsilon)A`$，梯度确实为零。这实际上是阻止了"概率已经降得太低还要继续降"的过度更新。题目问"为什么不阻止"的前提有误——PPO 在这种情况下确实阻止了更新。正确理解是：PPO 阻止的是朝任一方向的过度更新，而非仅阻止有利方向。
 
 </details>
 

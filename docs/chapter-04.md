@@ -135,7 +135,7 @@ A^\pi(s_t, a_t) = Q^\pi(s_t, a_t) - V^\pi(s_t)
 
 ### 4.2.4 无穷步极限：蒙特卡洛优势估计
 
-令 $`k \to \infty`$，假设 episode 无限长或适当处理终止条件，由于 $`\gamma < 1`$，$`\gamma^k V(s_{t+k}) \to 0`$（在 $`V`$ 有界的条件下），我们得到：
+令 $`k \to \infty`$，假设 episode 无限长或适当处理终止条件，由于 $`\gamma \lt  1`$，$`\gamma^k V(s_{t+k}) \to 0`$（在 $`V`$ 有界的条件下），我们得到：
 
 ```math
 \hat{A}_t^{(\infty)} = \sum_{l=0}^{\infty} \gamma^l r_{t+l} - V(s_t)
@@ -227,8 +227,8 @@ A^\pi(s_t, a_t) = \mathbb{E}\left[ \sum_{l=0}^{\infty} \gamma^l r_{t+l} \,\middl
 
 | $`k`$ 值 | 偏差 | 方差 | 样本效率 | 对 Critic 质量的依赖 | 备注 |
 |--------|------|------|----------|---------------------|------|
-| $`k=1`$ | 最大（$`\propto \gamma \|V - V^\pi\|`$） | 最小 | 最高（每步都可更新） | 最强 | 纯 TD，完全信任 critic |
-| $`k=2`$ | 较大（$`\propto \gamma^2 \|V - V^\pi\|`$） | 较小 | 高 | 强 | 两步真实奖励 + bootstrap |
+| $`k=1`$ | 最大（$`\propto \gamma \Vert V - V^\pi\Vert `$） | 最小 | 最高（每步都可更新） | 最强 | 纯 TD，完全信任 critic |
+| $`k=2`$ | 较大（$`\propto \gamma^2 \Vert V - V^\pi\Vert `$） | 较小 | 高 | 强 | 两步真实奖励 + bootstrap |
 | $`k=5`$ | 中等 | 中等 | 中等 | 中等 | 常用折中选择 |
 | $`k=20`$ | 较小 | 较大 | 较低 | 弱 | 接近蒙特卡洛 |
 | $`k=\infty`$ | 零（无偏） | 最大 | 最低（需完整 episode） | 最弱（仅作基线） | 蒙特卡洛优势 |
@@ -303,7 +303,7 @@ $`\lambda`$-return 还有一个等价的后向视角（backward view）表述，
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{k=1}^{\infty} \lambda^{k-1} \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V
 ```
 
-现在需要交换两个求和的顺序。注意内层求和的条件是 $`0 \leq l \leq k-1`$，即 $`l < k`$，等价于 $`k > l`$，即 $`k \geq l+1`$。因此交换后外层对 $`l`$ 从 $`0`$ 到 $`\infty`$ 求和，内层对 $`k`$ 从 $`l+1`$ 到 $`\infty`$ 求和：
+现在需要交换两个求和的顺序。注意内层求和的条件是 $`0 \leq l \leq k-1`$，即 $`l \lt  k`$，等价于 $`k \gt  l`$，即 $`k \geq l+1`$。因此交换后外层对 $`l`$ 从 $`0`$ 到 $`\infty`$ 求和，内层对 $`k`$ 从 $`l+1`$ 到 $`\infty`$ 求和：
 
 ```math
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{l=0}^{\infty} \gamma^l \delta_{t+l}^V \sum_{k=l+1}^{\infty} \lambda^{k-1}
@@ -416,7 +416,7 @@ V_t^{\text{target}} = \hat{A}_t + V(s_t)
 
 ### 4.6.4 有限 Horizon 下的等价性说明
 
-在实际训练中，rollout 总是有限长度的。当 rollout 长度为 $`T`$ 时，递推形式计算的实际上是截断级数 $`\sum_{l=0}^{T-t-1} (\gamma\lambda)^l \delta_{t+l}^V`$，而非无穷级数。但由于 $`\gamma\lambda < 1`$，被截断的尾部贡献以 $`(\gamma\lambda)^{T-t}`$ 的速率衰减，在 $`T`$ 足够大时可以忽略。这也是为什么 PPO 等算法通常使用固定长度的 rollout 片段（如 $`T=2048`$）而非完整 episode。
+在实际训练中，rollout 总是有限长度的。当 rollout 长度为 $`T`$ 时，递推形式计算的实际上是截断级数 $`\sum_{l=0}^{T-t-1} (\gamma\lambda)^l \delta_{t+l}^V`$，而非无穷级数。但由于 $`\gamma\lambda \lt  1`$，被截断的尾部贡献以 $`(\gamma\lambda)^{T-t}`$ 的速率衰减，在 $`T`$ 足够大时可以忽略。这也是为什么 PPO 等算法通常使用固定长度的 rollout 片段（如 $`T=2048`$）而非完整 episode。
 
 <a id="s4-7"></a>
 

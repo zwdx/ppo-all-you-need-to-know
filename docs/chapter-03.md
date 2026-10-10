@@ -52,7 +52,7 @@ p_\theta(\tau) = \rho_0(s_0) \prod_{t=0}^{\infty} P(s_{t+1}|s_t, a_t)\, \pi_\the
 d^\pi(s) = (1-\gamma) \sum_{t=0}^{\infty} \gamma^t \Pr(s_t = s \mid \pi) \tag{3.3}
 ```
 
-系数 $`(1-\gamma)`$ 使 $`d^\pi(s)`$ 归一化为概率分布（当 $`\gamma < 1`$ 时）。可以证明（推导见第 2 章）：
+系数 $`(1-\gamma)`$ 使 $`d^\pi(s)`$ 归一化为概率分布（当 $`\gamma \lt  1`$ 时）。可以证明（推导见第 2 章）：
 
 ```math
 J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta}}\big[V^{\pi_\theta}(s)\big] \tag{3.4}
@@ -138,13 +138,13 @@ J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta}}\big[V^{\pi_\th
 
 ### 3.3.1 因果性定理及其证明
 
-**定理 3.1（因果性）**：对于 $`t' < t`$，有
+**定理 3.1（因果性）**：对于 $`t' \lt  t`$，有
 
 ```math
 \mathbb{E}_{\tau \sim \pi_\theta}\big[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot r_{t'}\big] = 0 \tag{3.12}
 ```
 
-**证明**：利用条件期望的塔性质（tower property / law of iterated expectations）。记 $`\tau_{0:t} = (s_0, a_0, r_0, \dots, s_t, a_t)`$ 为截至时刻 $`t`$ 的历史。注意 $`r_{t'}`$ 在 $`t' < t`$ 时是 $`\tau_{0:t}`$ 的确定性函数，而 $`\nabla_\theta \log \pi_\theta(a_t|s_t)`$ 仅依赖于 $`(s_t, a_t)`$。我们有：
+**证明**：利用条件期望的塔性质（tower property / law of iterated expectations）。记 $`\tau_{0:t} = (s_0, a_0, r_0, \dots, s_t, a_t)`$ 为截至时刻 $`t`$ 的历史。注意 $`r_{t'}`$ 在 $`t' \lt  t`$ 时是 $`\tau_{0:t}`$ 的确定性函数，而 $`\nabla_\theta \log \pi_\theta(a_t|s_t)`$ 仅依赖于 $`(s_t, a_t)`$。我们有：
 
 ```math
 \begin{aligned}
@@ -163,7 +163,7 @@ J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta}}\big[V^{\pi_\th
 
 ### 3.3.2 Reward-to-Go 形式
 
-由因果性定理，式 (3.10) 中 $`R(\tau) = \sum_{k=0}^{\infty} \gamma^k r_k`$ 里所有 $`k < t`$ 的项对第 $`t`$ 步梯度的期望贡献为零，可以安全去掉。定义 **reward-to-go**（未来回报）：
+由因果性定理，式 (3.10) 中 $`R(\tau) = \sum_{k=0}^{\infty} \gamma^k r_k`$ 里所有 $`k \lt  t`$ 的项对第 $`t`$ 步梯度的期望贡献为零，可以安全去掉。定义 **reward-to-go**（未来回报）：
 
 ```math
 G_t = \sum_{k=t}^{\infty} \gamma^{k-t} r_k \tag{3.14}
@@ -309,9 +309,10 @@ b^*(s) = \frac{\mathbb{E}_{a \sim \pi}\big[\|\nabla_\theta \log \pi_\theta(a|s)\
 ### 3.7.1 两个网络的分工
 
 - **Actor（策略网络）**$`\pi_\theta(a|s)`$：参数为 $`\theta`$，输出动作概率分布。按式 (3.21) 更新：
-  ```math
-  \theta \leftarrow \theta + \alpha_\theta \cdot \nabla_\theta \log \pi_\theta(a|s) \cdot \hat{A}(s,a) \tag{3.26}
-  ```
+
+```math
+\theta \leftarrow \theta + \alpha_\theta \cdot \nabla_\theta \log \pi_\theta(a|s) \cdot \hat{A}(s,a) \tag{3.26}
+```
 
 - **Critic（价值网络）**$`V_\phi(s)`$：参数为 $`\phi`$，估计状态值函数 $`V^{\pi_\theta}(s)`$。用于提供基线和/或优势估计。
 
@@ -471,7 +472,7 @@ L_V(\phi) = \mathbb{E}_{s \sim d^{\pi_\theta}}\Big[\big(V_\phi(s) - V^{\pi_\thet
 <details>
 <summary>查看参考答案</summary>
 
-参考答案：$`\mathbb{E}_a[\nabla \log \pi(a|s)] = \sum_a \pi(a|s) \cdot \nabla \log \pi(a|s) = \nabla \sum_a \pi(a|s) = \nabla 1 = 0`$。在基线理论中，它保证了 $`b(s) \cdot \mathbb{E}[\nabla \log \pi] = 0`$，即基线不引入偏差。在因果性证明中，它保证了 $`\mathbb{E}[\nabla \log \pi(a_t|s_t) \cdot r_{t'}] = 0`$（$`t'<t`$），因为内层期望对 $`a_t`$ 取时 $`r_{t'}`$ 是常数，提出来后乘以零向量得零。
+参考答案：$`\mathbb{E}_a[\nabla \log \pi(a|s)] = \sum_a \pi(a|s) \cdot \nabla \log \pi(a|s) = \nabla \sum_a \pi(a|s) = \nabla 1 = 0`$。在基线理论中，它保证了 $`b(s) \cdot \mathbb{E}[\nabla \log \pi] = 0`$，即基线不引入偏差。在因果性证明中，它保证了 $`\mathbb{E}[\nabla \log \pi(a_t|s_t) \cdot r_{t'}] = 0`$（$`t'\lt t`$），因为内层期望对 $`a_t`$ 取时 $`r_{t'}`$ 是常数，提出来后乘以零向量得零。
 
 </details>
 

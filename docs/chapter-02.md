@@ -59,7 +59,7 @@ R(s, a) = \mathbb{E}[r_{t+1} \mid s_t = s, a_t = a].
 
 更一般地，奖励可以是随机变量，其分布也仅由 $`(s, a)`$（或 $`(s, a, s')`$）决定。为推导简洁，本章多数地方使用期望奖励 $`R(s,a)`$；当需要区分即时奖励的随机性时，会显式写出 $`r_{t+1}`$。
 
-**折扣因子 $`\gamma`$**：一个标量，满足 $`0 \leq \gamma < 1`$（在无限 horizon 设定下严格要求 $`\gamma < 1`$）。其作用与解释见 2.3 节。
+**折扣因子 $`\gamma`$**：一个标量，满足 $`0 \leq \gamma \lt  1`$（在无限 horizon 设定下严格要求 $`\gamma \lt  1`$）。其作用与解释见 2.3 节。
 
 <a id="s2-1-3"></a>
 
@@ -87,7 +87,7 @@ MDP 的核心假设是**马尔可夫性质（Markov property）**：给定当前
 \tau = (s_0, a_0, r_1, s_1, a_1, r_2, \dots, s_{H-1}, a_{H-1}, r_H).
 ```
 
-对于无限 horizon，$`\tau`$ 是一个无限序列；但在实际推导中，我们通常先处理有限 horizon 再取极限，或直接利用 $`\gamma < 1`$ 保证级数收敛。
+对于无限 horizon，$`\tau`$ 是一个无限序列；但在实际推导中，我们通常先处理有限 horizon 再取极限，或直接利用 $`\gamma \lt  1`$ 保证级数收敛。
 
 <a id="s2-2-2"></a>
 
@@ -102,9 +102,10 @@ p(\tau) = p(s_0) \prod_{t=0}^{H-1} \pi(a_t \mid s_t) \, P(s_{t+1} \mid s_t, a_t)
 这个分解的关键在于：**环境动力学项 $`P(s_{t+1} \mid s_t, a_t)`$ 与策略项 $`\pi(a_t \mid s_t)`$ 是完全可分离的**。原因如下：
 
 1. 根据链式法则，联合概率可以写成条件概率的连乘：
-   ```math
-   p(\tau) = p(s_0) \prod_{t=0}^{H-1} p(a_t \mid s_t, \text{history before } t) \cdot p(s_{t+1} \mid s_t, a_t, \text{history before } t).
-   ```
+
+```math
+p(\tau) = p(s_0) \prod_{t=0}^{H-1} p(a_t \mid s_t, \text{history before } t) \cdot p(s_{t+1} \mid s_t, a_t, \text{history before } t).
+```
 
 2. 由策略的定义，agent 选择动作只依赖当前状态：$`p(a_t \mid s_t, \text{history}) = \pi(a_t \mid s_t)`$。
 
@@ -135,12 +136,13 @@ G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} = r_{t+1} + \gamma r_{t+2} + \gamma
 $`\gamma`$ 的存在并非纯粹的数学技巧，它有至少三层含义：
 
 1. **数学收敛性**：若即时奖励有界，即 $`|r_t| \leq R_{\max}`$ 对所有 $`t`$ 成立，则
-   ```math
-   |G_t| \leq \sum_{k=0}^{\infty} \gamma^k R_{\max} = \frac{R_{\max}}{1 - \gamma}.
-   ```
-   该几何级数在 $`\gamma < 1`$ 时收敛，保证了 $`G_t`$ 是有界的。下面给出完整证明。
 
-2. **时间偏好**：$`\gamma < 1`$ 意味着未来的奖励比眼前的奖励「价值更低」。这反映了经济学中的时间偏好：今天的 1 元比明天的 1 元更有价值。$`\gamma`$ 越接近 1，agent 越「有耐心」。
+```math
+|G_t| \leq \sum_{k=0}^{\infty} \gamma^k R_{\max} = \frac{R_{\max}}{1 - \gamma}.
+```
+   该几何级数在 $`\gamma \lt  1`$ 时收敛，保证了 $`G_t`$ 是有界的。下面给出完整证明。
+
+2. **时间偏好**：$`\gamma \lt  1`$ 意味着未来的奖励比眼前的奖励「价值更低」。这反映了经济学中的时间偏好：今天的 1 元比明天的 1 元更有价值。$`\gamma`$ 越接近 1，agent 越「有耐心」。
 
 3. **不确定性建模**：可以将 $`\gamma`$ 理解为「环境在每个时间步以概率 $`\gamma`$ 继续运行、以概率 $`1-\gamma`$ 终止」的等价表述。在这种解释下，折扣回报等于未折扣回报在随机终止时间下的期望。
 
@@ -148,7 +150,7 @@ $`\gamma`$ 的存在并非纯粹的数学技巧，它有至少三层含义：
 
 ### 2.3.3 有界性证明
 
-**命题**：若 $`|r_t| \leq R_{\max}`$ 对所有 $`t`$ 成立且 $`0 \leq \gamma < 1`$，则 $`|G_t| \leq \dfrac{R_{\max}}{1-\gamma}`$。
+**命题**：若 $`|r_t| \leq R_{\max}`$ 对所有 $`t`$ 成立且 $`0 \leq \gamma \lt  1`$，则 $`|G_t| \leq \dfrac{R_{\max}}{1-\gamma}`$。
 
 **证明**：由三角不等式和几何级数求和公式，
 
@@ -202,7 +204,7 @@ Q^\pi(s, a) = \mathbb{E}_\pi[G_t \mid s_t = s, a_t = a] = \mathbb{E}_\pi\left[ \
 A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s).
 ```
 
-$`A^\pi(s, a) > 0`$ 表示动作 $`a`$ 优于策略 $`\pi`$ 在该状态的平均表现；$`A^\pi(s, a) < 0`$ 则表示劣于平均。
+$`A^\pi(s, a) \gt  0`$ 表示动作 $`a`$ 优于策略 $`\pi`$ 在该状态的平均表现；$`A^\pi(s, a) \lt  0`$ 则表示劣于平均。
 
 <a id="s2-4-4"></a>
 
@@ -321,7 +323,7 @@ V^\pi = R^\pi + \gamma P^\pi V^\pi.
 V^\pi = (I - \gamma P^\pi)^{-1} R^\pi.
 ```
 
-**为什么 $`I - \gamma P^\pi`$ 可逆？** 因为 $`P^\pi`$ 是一个随机矩阵（每行元素非负且和为 1），其谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma < 1`$ 时，$`\gamma P^\pi`$ 的谱半径 $`\rho(\gamma P^\pi) < 1`$，因此 $`I - \gamma P^\pi`$ 的特征值全部不为零（具体地，其特征值为 $`1 - \gamma \lambda_i`$，其中 $`\lambda_i`$ 是 $`P^\pi`$ 的特征值，$`|\lambda_i| \leq 1`$，故 $`|1 - \gamma \lambda_i| \geq 1 - \gamma > 0`$），矩阵可逆。这也保证了 $`V^\pi`$ 是唯一确定的。
+**为什么 $`I - \gamma P^\pi`$ 可逆？** 因为 $`P^\pi`$ 是一个随机矩阵（每行元素非负且和为 1），其谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma \lt  1`$ 时，$`\gamma P^\pi`$ 的谱半径 $`\rho(\gamma P^\pi) \lt  1`$，因此 $`I - \gamma P^\pi`$ 的特征值全部不为零（具体地，其特征值为 $`1 - \gamma \lambda_i`$，其中 $`\lambda_i`$ 是 $`P^\pi`$ 的特征值，$`|\lambda_i| \leq 1`$，故 $`|1 - \gamma \lambda_i| \geq 1 - \gamma \gt  0`$），矩阵可逆。这也保证了 $`V^\pi`$ 是唯一确定的。
 
 <a id="s2-6"></a>
 
@@ -369,7 +371,7 @@ $`T^*`$ 是一个 $`\gamma`$-压缩映射（$`\gamma`$-contraction mapping）。
 
 最后一步利用了 $`P(s' \mid s, a_1^*) \geq 0`$ 且 $`\sum_{s'} P(s' \mid s, a_1^*) = 1`$。交换 $`V_1, V_2`$ 的角色可得反向不等式，合起来即 $`|(T^* V_1)(s) - (T^* V_2)(s)| \leq \gamma \|V_1 - V_2\|_\infty`$ 对所有 $`s`$ 成立，取 max 即得压缩性。$`\square`$
 
-由于 $`0 \leq \gamma < 1`$，根据 **Banach 不动点定理**（Banach fixed-point theorem），$`T^*`$ 在完备度量空间 $`(\mathbb{R}^{|\mathcal{S}|}, \|\cdot\|_\infty)`$ 上有**唯一**不动点 $`V^*`$，且从任意初始 $`V_0`$ 出发，迭代 $`V_{k+1} = T^* V_k`$ 都以指数速率收敛到 $`V^*`$。这就是**价值迭代（value iteration）** 算法的理论基础。同理，$`T^\pi`$ 也是 $`\gamma`$-压缩映射，保证了 $`V^\pi`$ 的唯一性和策略评估迭代的收敛性。
+由于 $`0 \leq \gamma \lt  1`$，根据 **Banach 不动点定理**（Banach fixed-point theorem），$`T^*`$ 在完备度量空间 $`(\mathbb{R}^{|\mathcal{S}|}, \|\cdot\|_\infty)`$ 上有**唯一**不动点 $`V^*`$，且从任意初始 $`V_0`$ 出发，迭代 $`V_{k+1} = T^* V_k`$ 都以指数速率收敛到 $`V^*`$。这就是**价值迭代（value iteration）** 算法的理论基础。同理，$`T^\pi`$ 也是 $`\gamma`$-压缩映射，保证了 $`V^\pi`$ 的唯一性和策略评估迭代的收敛性。
 
 <a id="s2-6-3"></a>
 
@@ -509,7 +511,7 @@ $`\square`$
 ### 要点回顾
 
 1. **MDP 五元组** $`(\mathcal{S}, \mathcal{A}, P, R, \gamma)`$ 提供了 agent-environment 交互的严格数学框架；马尔可夫性质保证了状态是历史的充分统计量，使轨迹概率可分解为环境动力学与策略的可分离连乘。
-2. **折扣回报** $`G_t`$ 在 $`\gamma < 1`$ 且有界奖励下有界，折扣因子兼具数学收敛性、时间偏好和不确定性三重含义。
+2. **折扣回报** $`G_t`$ 在 $`\gamma \lt  1`$ 且有界奖励下有界，折扣因子兼具数学收敛性、时间偏好和不确定性三重含义。
 3. **价值函数三件套** $`V^\pi, Q^\pi, A^\pi`$ 通过全期望公式相互关联，优势函数的零均值性质 $`\mathbb{E}_{a \sim \pi}[A^\pi(s,a)] = 0`$ 是基线方法和策略梯度的理论支柱。
 4. **贝尔曼方程**将价值函数表达为递归不动点；$`T^\pi`$ 和 $`T^*`$ 都是 $`\gamma`$-压缩映射，Banach 不动点定理保证了唯一解和迭代收敛；矩阵形式 $`V^\pi = (I - \gamma P^\pi)^{-1} R^\pi`$ 揭示了可逆性的谱条件。
 5. **TD 误差**在 $`V = V^\pi`$ 时是优势函数的无偏估计，在 $`V \neq V^\pi`$ 时是有偏估计；这一事实连接了价值函数近似与策略改进，是 GAE（第 4 章）和 PPO（第 6 章）的核心纽带。
@@ -536,12 +538,12 @@ $`\square`$
 
 </details>
 
-**题目 3**：为什么矩阵 $`I - \gamma P^\pi`$ 在 $`\gamma < 1`$ 时可逆？
+**题目 3**：为什么矩阵 $`I - \gamma P^\pi`$ 在 $`\gamma \lt  1`$ 时可逆？
 
 <details>
 <summary>查看参考答案</summary>
 
-参考答案：$`P^\pi`$ 是随机矩阵，谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma < 1`$ 时，$`\rho(\gamma P^\pi) < 1`$，故 $`I - \gamma P^\pi`$ 的所有特征值 $`1 - \gamma \lambda_i`$ 满足 $`|1 - \gamma \lambda_i| \geq 1 - \gamma > 0`$，没有零特征值，矩阵可逆。
+参考答案：$`P^\pi`$ 是随机矩阵，谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma \lt  1`$ 时，$`\rho(\gamma P^\pi) \lt  1`$，故 $`I - \gamma P^\pi`$ 的所有特征值 $`1 - \gamma \lambda_i`$ 满足 $`|1 - \gamma \lambda_i| \geq 1 - \gamma \gt  0`$，没有零特征值，矩阵可逆。
 
 </details>
 

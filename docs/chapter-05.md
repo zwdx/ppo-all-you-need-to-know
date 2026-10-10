@@ -35,7 +35,7 @@
 
 ### 5.2.1 基本恒等式与无偏性
 
-设我们希望计算期望 $`\mathbb{E}_{x \sim q}[f(x)]`$，但只能从另一个分布 $`p`$ 中获取样本。假设 $`p`$ 的支撑覆盖 $`q`$ 的支撑，即对所有满足 $`q(x) > 0`$ 的 $`x`$ 都有 $`p(x) > 0`$。定义**重要性比（importance ratio）** 为：
+设我们希望计算期望 $`\mathbb{E}_{x \sim q}[f(x)]`$，但只能从另一个分布 $`p`$ 中获取样本。假设 $`p`$ 的支撑覆盖 $`q`$ 的支撑，即对所有满足 $`q(x) \gt  0`$ 的 $`x`$ 都有 $`p(x) \gt  0`$。定义**重要性比（importance ratio）** 为：
 
 ```math
 r(x) = \frac{q(x)}{p(x)}.
@@ -47,7 +47,7 @@ r(x) = \frac{q(x)}{p(x)}.
 \mathbb{E}_{x \sim p}\left[r(x) f(x)\right] = \int p(x) \cdot \frac{q(x)}{p(x)} \cdot f(x) \, dx = \int q(x) f(x) \, dx = \mathbb{E}_{x \sim q}[f(x)].
 ```
 
-上述推导的关键步骤是在积分中乘除 $`q(x)/p(x)`$，然后交换测度。这要求 $`p(x) > 0`$ 在 $`q(x) > 0`$ 的所有点上成立；若存在 $`q(x) > 0`$ 但 $`p(x) = 0`$ 的点，则该点贡献被遗漏，估计量产生系统性偏差。因此在支撑条件满足时，IS 估计量是**严格无偏**的。
+上述推导的关键步骤是在积分中乘除 $`q(x)/p(x)`$，然后交换测度。这要求 $`p(x) \gt  0`$ 在 $`q(x) \gt  0`$ 的所有点上成立；若存在 $`q(x) \gt  0`$ 但 $`p(x) = 0`$ 的点，则该点贡献被遗漏，估计量产生系统性偏差。因此在支撑条件满足时，IS 估计量是**严格无偏**的。
 
 给定 $`N`$ 个独立同分布样本 $`x_i \sim p`$，IS 估计量为：
 
@@ -157,7 +157,7 @@ V^{\pi'}(s_0) - V^\pi(s_0) = \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty
 \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty} \gamma^t r_t + \sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t)\right].
 ```
 
-后两项构成 telescoping 级数：$`\sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t) = -V^\pi(s_0)`$（因为 $`\lim_{T\to\infty} \gamma^T V^\pi(s_T) = 0`$，假定 $`\gamma < 1`$ 且 $`V^\pi`$ 有界）。因此右边等于 $`\mathbb{E}_{\tau \sim \pi'}[G_0] - V^\pi(s_0) = V^{\pi'}(s_0) - V^\pi(s_0)`$，恒等式成立。
+后两项构成 telescoping 级数：$`\sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t) = -V^\pi(s_0)`$（因为 $`\lim_{T\to\infty} \gamma^T V^\pi(s_T) = 0`$，假定 $`\gamma \lt  1`$ 且 $`V^\pi`$ 有界）。因此右边等于 $`\mathbb{E}_{\tau \sim \pi'}[G_0] - V^\pi(s_0) = V^{\pi'}(s_0) - V^\pi(s_0)`$，恒等式成立。
 
 接下来，注意到括号内的表达式正是 TD 误差 $`\delta_t = r_t + \gamma V^\pi(s_{t+1}) - V^\pi(s_t)`$，而由第 2 章结论，$`\mathbb{E}[\delta_t | s_t, a_t] = A^\pi(s_t, a_t)`$。因此：
 
@@ -245,7 +245,7 @@ J(\pi') \geq L_\pi(\pi') - C \cdot \max_s D_\text{KL}\left(\pi'(\cdot|s) \| \pi(
 
 **性质 2（梯度一致性）**：在 $`\pi' = \pi`$ 处，$`\nabla_{\pi'} L_\pi(\pi')|_{\pi'=\pi} = \nabla_{\pi'} \eta(\pi')|_{\pi'=\pi} = \nabla J(\pi)`$（因为 $`\nabla J(\pi)`$ 的策略梯度形式恰好等于 $`\nabla \eta(\pi')|_{\pi'=\pi}`$，见第 3 章策略梯度定理）。因此下界函数与真实目标在当前策略处不仅值相同，梯度也相同。
 
-这两个性质的推论是：**只要我们能保证 $`\max_s D_\text{KL}(\pi'\|\pi)`$ 足够小，使得 $`\underline{J}_\pi(\pi') > J(\pi)`$，就必然有 $`J(\pi') > J(\pi)`$**。换言之，在 KL 球约束内优化替代目标 $`L_\pi`$ 就能保证真实性能单调不降。这个 KL 球就是所谓的**信任域（trust region）**——在该区域内，我们对替代目标的优化是「可信的」。
+这两个性质的推论是：**只要我们能保证 $`\max_s D_\text{KL}(\pi'\|\pi)`$ 足够小，使得 $`\underline{J}_\pi(\pi') \gt  J(\pi)`$，就必然有 $`J(\pi') \gt  J(\pi)`$**。换言之，在 KL 球约束内优化替代目标 $`L_\pi`$ 就能保证真实性能单调不降。这个 KL 球就是所谓的**信任域（trust region）**——在该区域内，我们对替代目标的优化是「可信的」。
 
 <a id="s5-6"></a>
 
@@ -417,7 +417,7 @@ PPO 的设计目标正是用**一阶优化方法**（SGD/Adam）达到「近似�
 <details>
 <summary>查看参考答案</summary>
 
-参考答案：若存在 $`q(x)>0`$ 但 $`p(x)=0`$ 的区域，该区域对 $`\mathbb{E}_q[f]`$ 的贡献永远无法被采样到，IS 估计量系统性低估真实期望，产生偏差。
+参考答案：若存在 $`q(x)\gt 0`$ 但 $`p(x)=0`$ 的区域，该区域对 $`\mathbb{E}_q[f]`$ 的贡献永远无法被采样到，IS 估计量系统性低估真实期望，产生偏差。
 
 </details>
 

@@ -502,7 +502,7 @@ def get_lr(base_lr, current_step, total_steps):
 \|g\|_2 = \sqrt{\sum_i g_i^2}
 ```
 
-若 $`\|g\|_2 > \text{max\_grad\_norm}`$，则将所有梯度分量等比例缩放至 $`\text{max\_grad\_norm}`$。这与 PPO-Clip 中 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)`$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
+若 $`\|g\|_2 \gt  \text{max\_grad\_norm}`$，则将所有梯度分量等比例缩放至 $`\text{max\_grad\_norm}`$。这与 PPO-Clip 中 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)`$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
 
 <a id="s7-5"></a>
 
@@ -555,7 +555,7 @@ def get_lr(base_lr, current_step, total_steps):
 | explained_variance | $`1 - \frac{\text{Var}(R-V)}{\text{Var}(R)}`$，critic 拟合质量 | > 0.5 | < 0：critic 比常数预测还差，检查网络/lr/归一化 |
 | value_loss | $`\mathbb{E}[(V_\theta(s) - \hat{R})^2]`$ | 持续下降 | 不降或震荡：critic 容量不足、lr 不当 |
 | policy_loss | $`-\mathbb{E}[\min(r\hat{A}, \text{clip}(r)\hat{A})]`$ | 无固定范围 | 突增：结合 approx_kl 判断 |
-| grad_norm | $`\|\nabla L\|_2`$（裁剪前） | 平稳 | 突增：不稳定前兆，检查奖励尺度、观测归一化 |
+| grad_norm | $`\Vert \nabla L\Vert _2`$（裁剪前） | 平稳 | 突增：不稳定前兆，检查奖励尺度、观测归一化 |
 
 <a id="s7-6-2"></a>
 

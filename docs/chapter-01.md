@@ -226,7 +226,7 @@ D_{\mathrm{KL}}(p \| q) = H(p, q) - H(p) = \sum_x p(x) \log \frac{p(x)}{q(x)} = 
 
 **定理（KL 非负性 / Gibbs 不等式）**：$`D_{\mathrm{KL}}(p \| q) \geq 0`$，等号当且仅当 $`p = q`$（几乎处处）时成立。
 
-**证明**：考虑函数 $`f(t) = -\log t`$，它是严格凸函数（$`f''(t) = 1/t^2 > 0`$ 对 $`t > 0`$）。由 Jensen 不等式（1.5 节），对凸函数 $`f`$ 有 $`f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]`$。令 $`X = q(x)/p(x)`$，期望对 $`p`$ 取：
+**证明**：考虑函数 $`f(t) = -\log t`$，它是严格凸函数（$`f''(t) = 1/t^2 \gt  0`$ 对 $`t \gt  0`$）。由 Jensen 不等式（1.5 节），对凸函数 $`f`$ 有 $`f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]`$。令 $`X = q(x)/p(x)`$，期望对 $`p`$ 取：
 
 ```math
 -\log \mathbb{E}_{x \sim p}\!\left[\frac{q(x)}{p(x)}\right] \leq \mathbb{E}_{x \sim p}\!\left[-\log \frac{q(x)}{p(x)}\right]
@@ -278,7 +278,7 @@ f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]
 ### 1.5.2 其他常用不等式
 
 - **Cauchy-Schwarz 不等式**：$`|\mathbb{E}[XY]| \leq \sqrt{\mathbb{E}[X^2]\,\mathbb{E}[Y^2]}`$。在分析梯度估计的方差上界时使用。
-- **Markov 不等式**：$`P(X \geq a) \leq \mathbb{E}[X]/a`$（$`X \geq 0, a > 0`$）。概率界的基本工具。
+- **Markov 不等式**：$`P(X \geq a) \leq \mathbb{E}[X]/a`$（$`X \geq 0, a \gt  0`$）。概率界的基本工具。
 - **三角不等式**：$`|a + b| \leq |a| + |b|`$。在误差累积分析中频繁出现。
 
 <a id="s1-6"></a>

@@ -384,7 +384,7 @@ TRPO 的信任域要用二阶优化 + 共轭梯度，实现复杂、开销大
 | 符号 | 含义 |
 |---|---|
 | $`\nabla_\theta`$ | 对参数 $`\theta`$ 的梯度 |
-| $`D_{\mathrm{KL}}(p \,\|\, q)`$ | KL 散度（注意不对称，顺序有意义） |
+| $`D_{\mathrm{KL}}(p \,\Vert \, q)`$ | KL 散度（注意不对称，顺序有意义） |
 | $`\mathbb{E}`$, $`\mathrm{Var}`$ | 期望、方差 |
 | $`T^\pi`$, $`T^*`$ | 贝尔曼期望算子、贝尔曼最优算子 |
 | $`F(\theta)`$ | Fisher 信息矩阵 |
@@ -406,7 +406,7 @@ TRPO 的信任域要用二阶优化 + 共轭梯度，实现复杂、开销大
 
 ## 数学公式说明
 
-- 所有公式使用 LaTeX 书写。行内公式为 `$...$`，独立公式为 `$$...$$`。
+- 所有公式使用 LaTeX 书写。行内公式使用 GitHub 的“美元符号 + 反引号”语法，独立公式使用顶层 `math` 围栏。
 - 若你的 Markdown 阅读器不渲染 LaTeX，建议用 Typora、Obsidian、VS Code（装 Markdown+Math 插件）或任何支持 KaTeX/MathJax 的工具打开。
 - 关键推导均逐步展开，中间步骤不省略。建议**手推一遍**再往下读——策略梯度和 GAE 这两处推导，看懂和推出来是两回事。
 
@@ -624,7 +624,7 @@ D_{\mathrm{KL}}(p \| q) = H(p, q) - H(p) = \sum_x p(x) \log \frac{p(x)}{q(x)} = 
 
 **定理（KL 非负性 / Gibbs 不等式）**：$`D_{\mathrm{KL}}(p \| q) \geq 0`$，等号当且仅当 $`p = q`$（几乎处处）时成立。
 
-**证明**：考虑函数 $`f(t) = -\log t`$，它是严格凸函数（$`f''(t) = 1/t^2 > 0`$ 对 $`t > 0`$）。由 Jensen 不等式（1.5 节），对凸函数 $`f`$ 有 $`f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]`$。令 $`X = q(x)/p(x)`$，期望对 $`p`$ 取：
+**证明**：考虑函数 $`f(t) = -\log t`$，它是严格凸函数（$`f''(t) = 1/t^2 \gt  0`$ 对 $`t \gt  0`$）。由 Jensen 不等式（1.5 节），对凸函数 $`f`$ 有 $`f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]`$。令 $`X = q(x)/p(x)`$，期望对 $`p`$ 取：
 
 ```math
 -\log \mathbb{E}_{x \sim p}\!\left[\frac{q(x)}{p(x)}\right] \leq \mathbb{E}_{x \sim p}\!\left[-\log \frac{q(x)}{p(x)}\right]
@@ -676,7 +676,7 @@ f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]
 ### 1.5.2 其他常用不等式
 
 - **Cauchy-Schwarz 不等式**：$`|\mathbb{E}[XY]| \leq \sqrt{\mathbb{E}[X^2]\,\mathbb{E}[Y^2]}`$。在分析梯度估计的方差上界时使用。
-- **Markov 不等式**：$`P(X \geq a) \leq \mathbb{E}[X]/a`$（$`X \geq 0, a > 0`$）。概率界的基本工具。
+- **Markov 不等式**：$`P(X \geq a) \leq \mathbb{E}[X]/a`$（$`X \geq 0, a \gt  0`$）。概率界的基本工具。
 - **三角不等式**：$`|a + b| \leq |a| + |b|`$。在误差累积分析中频繁出现。
 
 <a id="s1-6"></a>
@@ -947,7 +947,7 @@ R(s, a) = \mathbb{E}[r_{t+1} \mid s_t = s, a_t = a].
 
 更一般地，奖励可以是随机变量，其分布也仅由 $`(s, a)`$（或 $`(s, a, s')`$）决定。为推导简洁，本章多数地方使用期望奖励 $`R(s,a)`$；当需要区分即时奖励的随机性时，会显式写出 $`r_{t+1}`$。
 
-**折扣因子 $`\gamma`$**：一个标量，满足 $`0 \leq \gamma < 1`$（在无限 horizon 设定下严格要求 $`\gamma < 1`$）。其作用与解释见 2.3 节。
+**折扣因子 $`\gamma`$**：一个标量，满足 $`0 \leq \gamma \lt  1`$（在无限 horizon 设定下严格要求 $`\gamma \lt  1`$）。其作用与解释见 2.3 节。
 
 <a id="s2-1-3"></a>
 
@@ -975,7 +975,7 @@ MDP 的核心假设是**马尔可夫性质（Markov property）**：给定当前
 \tau = (s_0, a_0, r_1, s_1, a_1, r_2, \dots, s_{H-1}, a_{H-1}, r_H).
 ```
 
-对于无限 horizon，$`\tau`$ 是一个无限序列；但在实际推导中，我们通常先处理有限 horizon 再取极限，或直接利用 $`\gamma < 1`$ 保证级数收敛。
+对于无限 horizon，$`\tau`$ 是一个无限序列；但在实际推导中，我们通常先处理有限 horizon 再取极限，或直接利用 $`\gamma \lt  1`$ 保证级数收敛。
 
 <a id="s2-2-2"></a>
 
@@ -990,9 +990,10 @@ p(\tau) = p(s_0) \prod_{t=0}^{H-1} \pi(a_t \mid s_t) \, P(s_{t+1} \mid s_t, a_t)
 这个分解的关键在于：**环境动力学项 $`P(s_{t+1} \mid s_t, a_t)`$ 与策略项 $`\pi(a_t \mid s_t)`$ 是完全可分离的**。原因如下：
 
 1. 根据链式法则，联合概率可以写成条件概率的连乘：
-   ```math
-   p(\tau) = p(s_0) \prod_{t=0}^{H-1} p(a_t \mid s_t, \text{history before } t) \cdot p(s_{t+1} \mid s_t, a_t, \text{history before } t).
-   ```
+
+```math
+p(\tau) = p(s_0) \prod_{t=0}^{H-1} p(a_t \mid s_t, \text{history before } t) \cdot p(s_{t+1} \mid s_t, a_t, \text{history before } t).
+```
 
 2. 由策略的定义，agent 选择动作只依赖当前状态：$`p(a_t \mid s_t, \text{history}) = \pi(a_t \mid s_t)`$。
 
@@ -1023,12 +1024,13 @@ G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} = r_{t+1} + \gamma r_{t+2} + \gamma
 $`\gamma`$ 的存在并非纯粹的数学技巧，它有至少三层含义：
 
 1. **数学收敛性**：若即时奖励有界，即 $`|r_t| \leq R_{\max}`$ 对所有 $`t`$ 成立，则
-   ```math
-   |G_t| \leq \sum_{k=0}^{\infty} \gamma^k R_{\max} = \frac{R_{\max}}{1 - \gamma}.
-   ```
-   该几何级数在 $`\gamma < 1`$ 时收敛，保证了 $`G_t`$ 是有界的。下面给出完整证明。
 
-2. **时间偏好**：$`\gamma < 1`$ 意味着未来的奖励比眼前的奖励「价值更低」。这反映了经济学中的时间偏好：今天的 1 元比明天的 1 元更有价值。$`\gamma`$ 越接近 1，agent 越「有耐心」。
+```math
+|G_t| \leq \sum_{k=0}^{\infty} \gamma^k R_{\max} = \frac{R_{\max}}{1 - \gamma}.
+```
+   该几何级数在 $`\gamma \lt  1`$ 时收敛，保证了 $`G_t`$ 是有界的。下面给出完整证明。
+
+2. **时间偏好**：$`\gamma \lt  1`$ 意味着未来的奖励比眼前的奖励「价值更低」。这反映了经济学中的时间偏好：今天的 1 元比明天的 1 元更有价值。$`\gamma`$ 越接近 1，agent 越「有耐心」。
 
 3. **不确定性建模**：可以将 $`\gamma`$ 理解为「环境在每个时间步以概率 $`\gamma`$ 继续运行、以概率 $`1-\gamma`$ 终止」的等价表述。在这种解释下，折扣回报等于未折扣回报在随机终止时间下的期望。
 
@@ -1036,7 +1038,7 @@ $`\gamma`$ 的存在并非纯粹的数学技巧，它有至少三层含义：
 
 ### 2.3.3 有界性证明
 
-**命题**：若 $`|r_t| \leq R_{\max}`$ 对所有 $`t`$ 成立且 $`0 \leq \gamma < 1`$，则 $`|G_t| \leq \dfrac{R_{\max}}{1-\gamma}`$。
+**命题**：若 $`|r_t| \leq R_{\max}`$ 对所有 $`t`$ 成立且 $`0 \leq \gamma \lt  1`$，则 $`|G_t| \leq \dfrac{R_{\max}}{1-\gamma}`$。
 
 **证明**：由三角不等式和几何级数求和公式，
 
@@ -1090,7 +1092,7 @@ Q^\pi(s, a) = \mathbb{E}_\pi[G_t \mid s_t = s, a_t = a] = \mathbb{E}_\pi\left[ \
 A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s).
 ```
 
-$`A^\pi(s, a) > 0`$ 表示动作 $`a`$ 优于策略 $`\pi`$ 在该状态的平均表现；$`A^\pi(s, a) < 0`$ 则表示劣于平均。
+$`A^\pi(s, a) \gt  0`$ 表示动作 $`a`$ 优于策略 $`\pi`$ 在该状态的平均表现；$`A^\pi(s, a) \lt  0`$ 则表示劣于平均。
 
 <a id="s2-4-4"></a>
 
@@ -1209,7 +1211,7 @@ V^\pi = R^\pi + \gamma P^\pi V^\pi.
 V^\pi = (I - \gamma P^\pi)^{-1} R^\pi.
 ```
 
-**为什么 $`I - \gamma P^\pi`$ 可逆？** 因为 $`P^\pi`$ 是一个随机矩阵（每行元素非负且和为 1），其谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma < 1`$ 时，$`\gamma P^\pi`$ 的谱半径 $`\rho(\gamma P^\pi) < 1`$，因此 $`I - \gamma P^\pi`$ 的特征值全部不为零（具体地，其特征值为 $`1 - \gamma \lambda_i`$，其中 $`\lambda_i`$ 是 $`P^\pi`$ 的特征值，$`|\lambda_i| \leq 1`$，故 $`|1 - \gamma \lambda_i| \geq 1 - \gamma > 0`$），矩阵可逆。这也保证了 $`V^\pi`$ 是唯一确定的。
+**为什么 $`I - \gamma P^\pi`$ 可逆？** 因为 $`P^\pi`$ 是一个随机矩阵（每行元素非负且和为 1），其谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma \lt  1`$ 时，$`\gamma P^\pi`$ 的谱半径 $`\rho(\gamma P^\pi) \lt  1`$，因此 $`I - \gamma P^\pi`$ 的特征值全部不为零（具体地，其特征值为 $`1 - \gamma \lambda_i`$，其中 $`\lambda_i`$ 是 $`P^\pi`$ 的特征值，$`|\lambda_i| \leq 1`$，故 $`|1 - \gamma \lambda_i| \geq 1 - \gamma \gt  0`$），矩阵可逆。这也保证了 $`V^\pi`$ 是唯一确定的。
 
 <a id="s2-6"></a>
 
@@ -1257,7 +1259,7 @@ $`T^*`$ 是一个 $`\gamma`$-压缩映射（$`\gamma`$-contraction mapping）。
 
 最后一步利用了 $`P(s' \mid s, a_1^*) \geq 0`$ 且 $`\sum_{s'} P(s' \mid s, a_1^*) = 1`$。交换 $`V_1, V_2`$ 的角色可得反向不等式，合起来即 $`|(T^* V_1)(s) - (T^* V_2)(s)| \leq \gamma \|V_1 - V_2\|_\infty`$ 对所有 $`s`$ 成立，取 max 即得压缩性。$`\square`$
 
-由于 $`0 \leq \gamma < 1`$，根据 **Banach 不动点定理**（Banach fixed-point theorem），$`T^*`$ 在完备度量空间 $`(\mathbb{R}^{|\mathcal{S}|}, \|\cdot\|_\infty)`$ 上有**唯一**不动点 $`V^*`$，且从任意初始 $`V_0`$ 出发，迭代 $`V_{k+1} = T^* V_k`$ 都以指数速率收敛到 $`V^*`$。这就是**价值迭代（value iteration）** 算法的理论基础。同理，$`T^\pi`$ 也是 $`\gamma`$-压缩映射，保证了 $`V^\pi`$ 的唯一性和策略评估迭代的收敛性。
+由于 $`0 \leq \gamma \lt  1`$，根据 **Banach 不动点定理**（Banach fixed-point theorem），$`T^*`$ 在完备度量空间 $`(\mathbb{R}^{|\mathcal{S}|}, \|\cdot\|_\infty)`$ 上有**唯一**不动点 $`V^*`$，且从任意初始 $`V_0`$ 出发，迭代 $`V_{k+1} = T^* V_k`$ 都以指数速率收敛到 $`V^*`$。这就是**价值迭代（value iteration）** 算法的理论基础。同理，$`T^\pi`$ 也是 $`\gamma`$-压缩映射，保证了 $`V^\pi`$ 的唯一性和策略评估迭代的收敛性。
 
 <a id="s2-6-3"></a>
 
@@ -1397,7 +1399,7 @@ $`\square`$
 ### 要点回顾
 
 1. **MDP 五元组** $`(\mathcal{S}, \mathcal{A}, P, R, \gamma)`$ 提供了 agent-environment 交互的严格数学框架；马尔可夫性质保证了状态是历史的充分统计量，使轨迹概率可分解为环境动力学与策略的可分离连乘。
-2. **折扣回报** $`G_t`$ 在 $`\gamma < 1`$ 且有界奖励下有界，折扣因子兼具数学收敛性、时间偏好和不确定性三重含义。
+2. **折扣回报** $`G_t`$ 在 $`\gamma \lt  1`$ 且有界奖励下有界，折扣因子兼具数学收敛性、时间偏好和不确定性三重含义。
 3. **价值函数三件套** $`V^\pi, Q^\pi, A^\pi`$ 通过全期望公式相互关联，优势函数的零均值性质 $`\mathbb{E}_{a \sim \pi}[A^\pi(s,a)] = 0`$ 是基线方法和策略梯度的理论支柱。
 4. **贝尔曼方程**将价值函数表达为递归不动点；$`T^\pi`$ 和 $`T^*`$ 都是 $`\gamma`$-压缩映射，Banach 不动点定理保证了唯一解和迭代收敛；矩阵形式 $`V^\pi = (I - \gamma P^\pi)^{-1} R^\pi`$ 揭示了可逆性的谱条件。
 5. **TD 误差**在 $`V = V^\pi`$ 时是优势函数的无偏估计，在 $`V \neq V^\pi`$ 时是有偏估计；这一事实连接了价值函数近似与策略改进，是 GAE（第 4 章）和 PPO（第 6 章）的核心纽带。
@@ -1414,9 +1416,9 @@ $`\square`$
 
 参考答案：$`\sum_a \pi(a \mid s)[Q^\pi(s,a) - V^\pi(s)] = \sum_a \pi(a \mid s) Q^\pi(s,a) - V^\pi(s) = V^\pi(s) - V^\pi(s) = 0`$。直观含义：优势函数以策略自身的平均表现为基准，正优势和负优势恰好抵消，说明它是「去中心化」的度量。
 
-**题目 3**：为什么矩阵 $`I - \gamma P^\pi`$ 在 $`\gamma < 1`$ 时可逆？
+**题目 3**：为什么矩阵 $`I - \gamma P^\pi`$ 在 $`\gamma \lt  1`$ 时可逆？
 
-参考答案：$`P^\pi`$ 是随机矩阵，谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma < 1`$ 时，$`\rho(\gamma P^\pi) < 1`$，故 $`I - \gamma P^\pi`$ 的所有特征值 $`1 - \gamma \lambda_i`$ 满足 $`|1 - \gamma \lambda_i| \geq 1 - \gamma > 0`$，没有零特征值，矩阵可逆。
+参考答案：$`P^\pi`$ 是随机矩阵，谱半径 $`\rho(P^\pi) \leq 1`$。当 $`\gamma \lt  1`$ 时，$`\rho(\gamma P^\pi) \lt  1`$，故 $`I - \gamma P^\pi`$ 的所有特征值 $`1 - \gamma \lambda_i`$ 满足 $`|1 - \gamma \lambda_i| \geq 1 - \gamma \gt  0`$，没有零特征值，矩阵可逆。
 
 **题目 4**：证明当 $`V = V^\pi`$ 时，$`\mathbb{E}[\delta_t \mid s_t = s, a_t = a] = A^\pi(s, a)`$。如果 $`V \neq V^\pi`$，这个等式还成立吗？为什么不成立？
 
@@ -1464,7 +1466,7 @@ p_\theta(\tau) = \rho_0(s_0) \prod_{t=0}^{\infty} P(s_{t+1}|s_t, a_t)\, \pi_\the
 d^\pi(s) = (1-\gamma) \sum_{t=0}^{\infty} \gamma^t \Pr(s_t = s \mid \pi) \tag{3.3}
 ```
 
-系数 $`(1-\gamma)`$ 使 $`d^\pi(s)`$ 归一化为概率分布（当 $`\gamma < 1`$ 时）。可以证明（推导见第 2 章）：
+系数 $`(1-\gamma)`$ 使 $`d^\pi(s)`$ 归一化为概率分布（当 $`\gamma \lt  1`$ 时）。可以证明（推导见第 2 章）：
 
 ```math
 J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta}}\big[V^{\pi_\theta}(s)\big] \tag{3.4}
@@ -1550,13 +1552,13 @@ J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta}}\big[V^{\pi_\th
 
 ### 3.3.1 因果性定理及其证明
 
-**定理 3.1（因果性）**：对于 $`t' < t`$，有
+**定理 3.1（因果性）**：对于 $`t' \lt  t`$，有
 
 ```math
 \mathbb{E}_{\tau \sim \pi_\theta}\big[\nabla_\theta \log \pi_\theta(a_t|s_t) \cdot r_{t'}\big] = 0 \tag{3.12}
 ```
 
-**证明**：利用条件期望的塔性质（tower property / law of iterated expectations）。记 $`\tau_{0:t} = (s_0, a_0, r_0, \dots, s_t, a_t)`$ 为截至时刻 $`t`$ 的历史。注意 $`r_{t'}`$ 在 $`t' < t`$ 时是 $`\tau_{0:t}`$ 的确定性函数，而 $`\nabla_\theta \log \pi_\theta(a_t|s_t)`$ 仅依赖于 $`(s_t, a_t)`$。我们有：
+**证明**：利用条件期望的塔性质（tower property / law of iterated expectations）。记 $`\tau_{0:t} = (s_0, a_0, r_0, \dots, s_t, a_t)`$ 为截至时刻 $`t`$ 的历史。注意 $`r_{t'}`$ 在 $`t' \lt  t`$ 时是 $`\tau_{0:t}`$ 的确定性函数，而 $`\nabla_\theta \log \pi_\theta(a_t|s_t)`$ 仅依赖于 $`(s_t, a_t)`$。我们有：
 
 ```math
 \begin{aligned}
@@ -1575,7 +1577,7 @@ J(\theta) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi_\theta}}\big[V^{\pi_\th
 
 ### 3.3.2 Reward-to-Go 形式
 
-由因果性定理，式 (3.10) 中 $`R(\tau) = \sum_{k=0}^{\infty} \gamma^k r_k`$ 里所有 $`k < t`$ 的项对第 $`t`$ 步梯度的期望贡献为零，可以安全去掉。定义 **reward-to-go**（未来回报）：
+由因果性定理，式 (3.10) 中 $`R(\tau) = \sum_{k=0}^{\infty} \gamma^k r_k`$ 里所有 $`k \lt  t`$ 的项对第 $`t`$ 步梯度的期望贡献为零，可以安全去掉。定义 **reward-to-go**（未来回报）：
 
 ```math
 G_t = \sum_{k=t}^{\infty} \gamma^{k-t} r_k \tag{3.14}
@@ -1721,9 +1723,10 @@ b^*(s) = \frac{\mathbb{E}_{a \sim \pi}\big[\|\nabla_\theta \log \pi_\theta(a|s)\
 ### 3.7.1 两个网络的分工
 
 - **Actor（策略网络）**$`\pi_\theta(a|s)`$：参数为 $`\theta`$，输出动作概率分布。按式 (3.21) 更新：
-  ```math
-  \theta \leftarrow \theta + \alpha_\theta \cdot \nabla_\theta \log \pi_\theta(a|s) \cdot \hat{A}(s,a) \tag{3.26}
-  ```
+
+```math
+\theta \leftarrow \theta + \alpha_\theta \cdot \nabla_\theta \log \pi_\theta(a|s) \cdot \hat{A}(s,a) \tag{3.26}
+```
 
 - **Critic（价值网络）**$`V_\phi(s)`$：参数为 $`\phi`$，估计状态值函数 $`V^{\pi_\theta}(s)`$。用于提供基线和/或优势估计。
 
@@ -1875,7 +1878,7 @@ L_V(\phi) = \mathbb{E}_{s \sim d^{\pi_\theta}}\Big[\big(V_\phi(s) - V^{\pi_\thet
 
 **题目 2**：证明 $`\mathbb{E}_{a \sim \pi_\theta(\cdot|s)}[\nabla_\theta \log \pi_\theta(a|s)] = 0`$，并说明这个性质在基线理论和因果性证明中分别扮演什么角色。
 
-参考答案：$`\mathbb{E}_a[\nabla \log \pi(a|s)] = \sum_a \pi(a|s) \cdot \nabla \log \pi(a|s) = \nabla \sum_a \pi(a|s) = \nabla 1 = 0`$。在基线理论中，它保证了 $`b(s) \cdot \mathbb{E}[\nabla \log \pi] = 0`$，即基线不引入偏差。在因果性证明中，它保证了 $`\mathbb{E}[\nabla \log \pi(a_t|s_t) \cdot r_{t'}] = 0`$（$`t'<t`$），因为内层期望对 $`a_t`$ 取时 $`r_{t'}`$ 是常数，提出来后乘以零向量得零。
+参考答案：$`\mathbb{E}_a[\nabla \log \pi(a|s)] = \sum_a \pi(a|s) \cdot \nabla \log \pi(a|s) = \nabla \sum_a \pi(a|s) = \nabla 1 = 0`$。在基线理论中，它保证了 $`b(s) \cdot \mathbb{E}[\nabla \log \pi] = 0`$，即基线不引入偏差。在因果性证明中，它保证了 $`\mathbb{E}[\nabla \log \pi(a_t|s_t) \cdot r_{t'}] = 0`$（$`t'\lt t`$），因为内层期望对 $`a_t`$ 取时 $`r_{t'}`$ 是常数，提出来后乘以零向量得零。
 
 **题目 3**：最优基线 $`b^*(s)`$ 与 $`V^\pi(s)`$ 何时相等？为什么实践中仍使用 $`V^\pi(s)`$？
 
@@ -2013,7 +2016,7 @@ A^\pi(s_t, a_t) = Q^\pi(s_t, a_t) - V^\pi(s_t)
 
 ### 4.2.4 无穷步极限：蒙特卡洛优势估计
 
-令 $`k \to \infty`$，假设 episode 无限长或适当处理终止条件，由于 $`\gamma < 1`$，$`\gamma^k V(s_{t+k}) \to 0`$（在 $`V`$ 有界的条件下），我们得到：
+令 $`k \to \infty`$，假设 episode 无限长或适当处理终止条件，由于 $`\gamma \lt  1`$，$`\gamma^k V(s_{t+k}) \to 0`$（在 $`V`$ 有界的条件下），我们得到：
 
 ```math
 \hat{A}_t^{(\infty)} = \sum_{l=0}^{\infty} \gamma^l r_{t+l} - V(s_t)
@@ -2105,8 +2108,8 @@ A^\pi(s_t, a_t) = \mathbb{E}\left[ \sum_{l=0}^{\infty} \gamma^l r_{t+l} \,\middl
 
 | $`k`$ 值 | 偏差 | 方差 | 样本效率 | 对 Critic 质量的依赖 | 备注 |
 |--------|------|------|----------|---------------------|------|
-| $`k=1`$ | 最大（$`\propto \gamma \|V - V^\pi\|`$） | 最小 | 最高（每步都可更新） | 最强 | 纯 TD，完全信任 critic |
-| $`k=2`$ | 较大（$`\propto \gamma^2 \|V - V^\pi\|`$） | 较小 | 高 | 强 | 两步真实奖励 + bootstrap |
+| $`k=1`$ | 最大（$`\propto \gamma \Vert V - V^\pi\Vert `$） | 最小 | 最高（每步都可更新） | 最强 | 纯 TD，完全信任 critic |
+| $`k=2`$ | 较大（$`\propto \gamma^2 \Vert V - V^\pi\Vert `$） | 较小 | 高 | 强 | 两步真实奖励 + bootstrap |
 | $`k=5`$ | 中等 | 中等 | 中等 | 中等 | 常用折中选择 |
 | $`k=20`$ | 较小 | 较大 | 较低 | 弱 | 接近蒙特卡洛 |
 | $`k=\infty`$ | 零（无偏） | 最大 | 最低（需完整 episode） | 最弱（仅作基线） | 蒙特卡洛优势 |
@@ -2181,7 +2184,7 @@ $`\lambda`$-return 还有一个等价的后向视角（backward view）表述，
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{k=1}^{\infty} \lambda^{k-1} \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}^V
 ```
 
-现在需要交换两个求和的顺序。注意内层求和的条件是 $`0 \leq l \leq k-1`$，即 $`l < k`$，等价于 $`k > l`$，即 $`k \geq l+1`$。因此交换后外层对 $`l`$ 从 $`0`$ 到 $`\infty`$ 求和，内层对 $`k`$ 从 $`l+1`$ 到 $`\infty`$ 求和：
+现在需要交换两个求和的顺序。注意内层求和的条件是 $`0 \leq l \leq k-1`$，即 $`l \lt  k`$，等价于 $`k \gt  l`$，即 $`k \geq l+1`$。因此交换后外层对 $`l`$ 从 $`0`$ 到 $`\infty`$ 求和，内层对 $`k`$ 从 $`l+1`$ 到 $`\infty`$ 求和：
 
 ```math
 \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{l=0}^{\infty} \gamma^l \delta_{t+l}^V \sum_{k=l+1}^{\infty} \lambda^{k-1}
@@ -2294,7 +2297,7 @@ V_t^{\text{target}} = \hat{A}_t + V(s_t)
 
 ### 4.6.4 有限 Horizon 下的等价性说明
 
-在实际训练中，rollout 总是有限长度的。当 rollout 长度为 $`T`$ 时，递推形式计算的实际上是截断级数 $`\sum_{l=0}^{T-t-1} (\gamma\lambda)^l \delta_{t+l}^V`$，而非无穷级数。但由于 $`\gamma\lambda < 1`$，被截断的尾部贡献以 $`(\gamma\lambda)^{T-t}`$ 的速率衰减，在 $`T`$ 足够大时可以忽略。这也是为什么 PPO 等算法通常使用固定长度的 rollout 片段（如 $`T=2048`$）而非完整 episode。
+在实际训练中，rollout 总是有限长度的。当 rollout 长度为 $`T`$ 时，递推形式计算的实际上是截断级数 $`\sum_{l=0}^{T-t-1} (\gamma\lambda)^l \delta_{t+l}^V`$，而非无穷级数。但由于 $`\gamma\lambda \lt  1`$，被截断的尾部贡献以 $`(\gamma\lambda)^{T-t}`$ 的速率衰减，在 $`T`$ 足够大时可以忽略。这也是为什么 PPO 等算法通常使用固定长度的 rollout 片段（如 $`T=2048`$）而非完整 episode。
 
 <a id="s4-7"></a>
 
@@ -2401,7 +2404,7 @@ V_t^{\text{target}} = \hat{A}_t + V(s_t)
 
 ### 5.2.1 基本恒等式与无偏性
 
-设我们希望计算期望 $`\mathbb{E}_{x \sim q}[f(x)]`$，但只能从另一个分布 $`p`$ 中获取样本。假设 $`p`$ 的支撑覆盖 $`q`$ 的支撑，即对所有满足 $`q(x) > 0`$ 的 $`x`$ 都有 $`p(x) > 0`$。定义**重要性比（importance ratio）** 为：
+设我们希望计算期望 $`\mathbb{E}_{x \sim q}[f(x)]`$，但只能从另一个分布 $`p`$ 中获取样本。假设 $`p`$ 的支撑覆盖 $`q`$ 的支撑，即对所有满足 $`q(x) \gt  0`$ 的 $`x`$ 都有 $`p(x) \gt  0`$。定义**重要性比（importance ratio）** 为：
 
 ```math
 r(x) = \frac{q(x)}{p(x)}.
@@ -2413,7 +2416,7 @@ r(x) = \frac{q(x)}{p(x)}.
 \mathbb{E}_{x \sim p}\left[r(x) f(x)\right] = \int p(x) \cdot \frac{q(x)}{p(x)} \cdot f(x) \, dx = \int q(x) f(x) \, dx = \mathbb{E}_{x \sim q}[f(x)].
 ```
 
-上述推导的关键步骤是在积分中乘除 $`q(x)/p(x)`$，然后交换测度。这要求 $`p(x) > 0`$ 在 $`q(x) > 0`$ 的所有点上成立；若存在 $`q(x) > 0`$ 但 $`p(x) = 0`$ 的点，则该点贡献被遗漏，估计量产生系统性偏差。因此在支撑条件满足时，IS 估计量是**严格无偏**的。
+上述推导的关键步骤是在积分中乘除 $`q(x)/p(x)`$，然后交换测度。这要求 $`p(x) \gt  0`$ 在 $`q(x) \gt  0`$ 的所有点上成立；若存在 $`q(x) \gt  0`$ 但 $`p(x) = 0`$ 的点，则该点贡献被遗漏，估计量产生系统性偏差。因此在支撑条件满足时，IS 估计量是**严格无偏**的。
 
 给定 $`N`$ 个独立同分布样本 $`x_i \sim p`$，IS 估计量为：
 
@@ -2523,7 +2526,7 @@ V^{\pi'}(s_0) - V^\pi(s_0) = \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty
 \mathbb{E}_{\tau \sim \pi'}\left[\sum_{t=0}^{\infty} \gamma^t r_t + \sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t)\right].
 ```
 
-后两项构成 telescoping 级数：$`\sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t) = -V^\pi(s_0)`$（因为 $`\lim_{T\to\infty} \gamma^T V^\pi(s_T) = 0`$，假定 $`\gamma < 1`$ 且 $`V^\pi`$ 有界）。因此右边等于 $`\mathbb{E}_{\tau \sim \pi'}[G_0] - V^\pi(s_0) = V^{\pi'}(s_0) - V^\pi(s_0)`$，恒等式成立。
+后两项构成 telescoping 级数：$`\sum_{t=0}^{\infty} \gamma^{t+1} V^\pi(s_{t+1}) - \sum_{t=0}^{\infty} \gamma^t V^\pi(s_t) = -V^\pi(s_0)`$（因为 $`\lim_{T\to\infty} \gamma^T V^\pi(s_T) = 0`$，假定 $`\gamma \lt  1`$ 且 $`V^\pi`$ 有界）。因此右边等于 $`\mathbb{E}_{\tau \sim \pi'}[G_0] - V^\pi(s_0) = V^{\pi'}(s_0) - V^\pi(s_0)`$，恒等式成立。
 
 接下来，注意到括号内的表达式正是 TD 误差 $`\delta_t = r_t + \gamma V^\pi(s_{t+1}) - V^\pi(s_t)`$，而由第 2 章结论，$`\mathbb{E}[\delta_t | s_t, a_t] = A^\pi(s_t, a_t)`$。因此：
 
@@ -2611,7 +2614,7 @@ J(\pi') \geq L_\pi(\pi') - C \cdot \max_s D_\text{KL}\left(\pi'(\cdot|s) \| \pi(
 
 **性质 2（梯度一致性）**：在 $`\pi' = \pi`$ 处，$`\nabla_{\pi'} L_\pi(\pi')|_{\pi'=\pi} = \nabla_{\pi'} \eta(\pi')|_{\pi'=\pi} = \nabla J(\pi)`$（因为 $`\nabla J(\pi)`$ 的策略梯度形式恰好等于 $`\nabla \eta(\pi')|_{\pi'=\pi}`$，见第 3 章策略梯度定理）。因此下界函数与真实目标在当前策略处不仅值相同，梯度也相同。
 
-这两个性质的推论是：**只要我们能保证 $`\max_s D_\text{KL}(\pi'\|\pi)`$ 足够小，使得 $`\underline{J}_\pi(\pi') > J(\pi)`$，就必然有 $`J(\pi') > J(\pi)`$**。换言之，在 KL 球约束内优化替代目标 $`L_\pi`$ 就能保证真实性能单调不降。这个 KL 球就是所谓的**信任域（trust region）**——在该区域内，我们对替代目标的优化是「可信的」。
+这两个性质的推论是：**只要我们能保证 $`\max_s D_\text{KL}(\pi'\|\pi)`$ 足够小，使得 $`\underline{J}_\pi(\pi') \gt  J(\pi)`$，就必然有 $`J(\pi') \gt  J(\pi)`$**。换言之，在 KL 球约束内优化替代目标 $`L_\pi`$ 就能保证真实性能单调不降。这个 KL 球就是所谓的**信任域（trust region）**——在该区域内，我们对替代目标的优化是「可信的」。
 
 <a id="s5-6"></a>
 
@@ -2780,7 +2783,7 @@ PPO 的设计目标正是用**一阶优化方法**（SGD/Adam）达到「近似�
 
 **题目 1**：为什么 IS 估计量要求行为分布 $`p`$ 的支撑覆盖目标分布 $`q`$ 的支撑？若不满足，估计量是有偏还是无偏？
 
-参考答案：若存在 $`q(x)>0`$ 但 $`p(x)=0`$ 的区域，该区域对 $`\mathbb{E}_q[f]`$ 的贡献永远无法被采样到，IS 估计量系统性低估真实期望，产生偏差。
+参考答案：若存在 $`q(x)\gt 0`$ 但 $`p(x)=0`$ 的区域，该区域对 $`\mathbb{E}_q[f]`$ 的贡献永远无法被采样到，IS 估计量系统性低估真实期望，产生偏差。
 
 **题目 2**：在策略梯度中使用单步重要性比而非轨迹比的根本原因是什么？单步比率忽略了什么误差来源？
 
@@ -2834,7 +2837,7 @@ r_t(\theta) = \frac{\pi_\theta(a_t | s_t)}{\pi_{\theta_{\text{old}}}(a_t | s_t)}
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t, \; \text{clip}\big(r_t(\theta), 1-\varepsilon, 1+\varepsilon\big) \hat{A}_t \right) \right]
 ```
 
-其中 $`\text{clip}(x, l, u) = \max(l, \min(x, u))`$ 将 $`x`$ 截断到区间 $`[l, u]`$ 内，$`\varepsilon > 0`$ 是裁剪半径（典型取值 0.1～0.3，常用 0.2）。$`\mathbb{E}_t`$ 表示对时间步 $`t`$ 在 rollout 数据上的经验平均。
+其中 $`\text{clip}(x, l, u) = \max(l, \min(x, u))`$ 将 $`x`$ 截断到区间 $`[l, u]`$ 内，$`\varepsilon \gt  0`$ 是裁剪半径（典型取值 0.1～0.3，常用 0.2）。$`\mathbb{E}_t`$ 表示对时间步 $`t`$ 在 rollout 数据上的经验平均。
 
 这个目标函数包含三个关键组件：
 - **未裁剪项** $`r_t(\theta) \hat{A}_t`$：即第 5 章中的标准替代目标，是真实性能差异 $`J(\pi_\theta) - J(\pi_{\theta_{\text{old}}})`$ 的一阶近似。
@@ -2847,25 +2850,25 @@ L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t,
 
 ### 6.2.2 六种情形的完整分析
 
-为了理解 clip 与 min 的联合作用，我们需要分 $`\hat{A}_t > 0`$ 和 $`\hat{A}_t < 0`$ 两大情形，每种情形下再按 $`r_t(\theta)`$ 落在三个区间讨论。记 $`r = r_t(\theta)`$，$`A = \hat{A}_t`$，$`c = \text{clip}(r, 1-\varepsilon, 1+\varepsilon)`$。
+为了理解 clip 与 min 的联合作用，我们需要分 $`\hat{A}_t \gt  0`$ 和 $`\hat{A}_t \lt  0`$ 两大情形，每种情形下再按 $`r_t(\theta)`$ 落在三个区间讨论。记 $`r = r_t(\theta)`$，$`A = \hat{A}_t`$，$`c = \text{clip}(r, 1-\varepsilon, 1+\varepsilon)`$。
 
-**情形一：$`A > 0`$（该动作比平均水平好，我们希望增大其概率）**
+**情形一：$`A \gt  0`$（该动作比平均水平好，我们希望增大其概率）**
 
 | $`r`$ 所在区间 | $`c`$ 的值 | $`rA`$ vs $`cA`$ | $`\min`$ 取值 | 梯度 | 行为解释 |
 |:---:|:---:|:---:|:---:|:---:|:---|
-| $`r < 1-\varepsilon`$ | $`1-\varepsilon`$ | $`rA < cA`$（因 $`r < 1-\varepsilon`$） | $`rA`$（未裁剪项） | $`\nabla_\theta r \cdot A \neq 0`$ | 当前概率远低于旧策略，未裁剪项更小被选中，保留完整梯度鼓励增大概率 |
+| $`r \lt  1-\varepsilon`$ | $`1-\varepsilon`$ | $`rA \lt  cA`$（因 $`r \lt  1-\varepsilon`$） | $`rA`$（未裁剪项） | $`\nabla_\theta r \cdot A \neq 0`$ | 当前概率远低于旧策略，未裁剪项更小被选中，保留完整梯度鼓励增大概率 |
 | $`1-\varepsilon \leq r \leq 1+\varepsilon`$ | $`r`$ | $`rA = cA`$ | $`rA = cA`$ | $`\nabla_\theta r \cdot A \neq 0`$ | 比率在安全区间内，两项相等，等价于未裁剪的策略梯度 |
-| $`r > 1+\varepsilon`$ | $`1+\varepsilon`$ | $`rA > cA`$（因 $`r > 1+\varepsilon`$） | $`cA`$（裁剪项） | $`0`$（$`c`$ 对 $`\theta`$ 为常数） | 概率已大幅增加超出安全范围，裁剪项更小被选中，梯度为零，阻止继续增大 |
+| $`r \gt  1+\varepsilon`$ | $`1+\varepsilon`$ | $`rA \gt  cA`$（因 $`r \gt  1+\varepsilon`$） | $`cA`$（裁剪项） | $`0`$（$`c`$ 对 $`\theta`$ 为常数） | 概率已大幅增加超出安全范围，裁剪项更小被选中，梯度为零，阻止继续增大 |
 
-**情形二：$`A < 0`$（该动作比平均水平差，我们希望减小其概率）**
+**情形二：$`A \lt  0`$（该动作比平均水平差，我们希望减小其概率）**
 
 | $`r`$ 所在区间 | $`c`$ 的值 | $`rA`$ vs $`cA`$ | $`\min`$ 取值 | 梯度 | 行为解释 |
 |:---:|:---:|:---:|:---:|:---:|:---|
-| $`r < 1-\varepsilon`$ | $`1-\varepsilon`$ | $`rA > cA`$（因 $`A<0`$，$`r<1-\varepsilon`$ 使 $`rA`$ 负得少） | $`cA`$（裁剪项） | $`0`$ | 概率已大幅减小超出安全范围，裁剪项更小被选中，梯度为零，阻止继续减小 |
+| $`r \lt  1-\varepsilon`$ | $`1-\varepsilon`$ | $`rA \gt  cA`$（因 $`A\lt 0`$，$`r\lt 1-\varepsilon`$ 使 $`rA`$ 负得少） | $`cA`$（裁剪项） | $`0`$ | 概率已大幅减小超出安全范围，裁剪项更小被选中，梯度为零，阻止继续减小 |
 | $`1-\varepsilon \leq r \leq 1+\varepsilon`$ | $`r`$ | $`rA = cA`$ | $`rA = cA`$ | $`\nabla_\theta r \cdot A \neq 0`$ | 比率在安全区间内，等价于未裁剪的策略梯度 |
-| $`r > 1+\varepsilon`$ | $`1+\varepsilon`$ | $`rA < cA`$（因 $`A<0`$，$`r>1+\varepsilon`$ 使 $`rA`$ 负得多） | $`rA`$（未裁剪项） | $`\nabla_\theta r \cdot A \neq 0`$ | 当前概率远高于旧策略但动作实际很差，未裁剪项更小被选中，保留完整梯度鼓励减小概率 |
+| $`r \gt  1+\varepsilon`$ | $`1+\varepsilon`$ | $`rA \lt  cA`$（因 $`A\lt 0`$，$`r\gt 1+\varepsilon`$ 使 $`rA`$ 负得多） | $`rA`$（未裁剪项） | $`\nabla_\theta r \cdot A \neq 0`$ | 当前概率远高于旧策略但动作实际很差，未裁剪项更小被选中，保留完整梯度鼓励减小概率 |
 
-以上六行可以浓缩为一条核心规则：**$`\min`$ 操作总是选择对当前参数更新"更保守"的那一项**。当策略更新方向与优势信号一致（$`A>0`$ 时增大 $`r`$，$`A<0`$ 时减小 $`r`$）且幅度超过 $`\varepsilon`$ 时，裁剪项生效、梯度归零，阻止过度更新；当策略更新方向与优势信号相反（例如 $`A>0`$ 但 $`r`$ 反而变小了），说明当前策略在该状态-动作对上犯了错，此时未裁剪项更小被选中，梯度不受阻碍，允许纠错。
+以上六行可以浓缩为一条核心规则：**$`\min`$ 操作总是选择对当前参数更新"更保守"的那一项**。当策略更新方向与优势信号一致（$`A\gt 0`$ 时增大 $`r`$，$`A\lt 0`$ 时减小 $`r`$）且幅度超过 $`\varepsilon`$ 时，裁剪项生效、梯度归零，阻止过度更新；当策略更新方向与优势信号相反（例如 $`A\gt 0`$ 但 $`r`$ 反而变小了），说明当前策略在该状态-动作对上犯了错，此时未裁剪项更小被选中，梯度不受阻碍，允许纠错。
 
 <a id="s6-2-3"></a>
 
@@ -2883,7 +2886,7 @@ PPO-Clip 最容易被误解的点在于其**不对称性**：它只阻止朝有�
 
 对比 TRPO 的理论保障：TRPO 通过约束 $`\max_s D_{\text{KL}}`$ 得到了 $`J(\pi') \geq L_\pi(\pi') - C \cdot \max_s D_{\text{KL}}`$ 这一全局下界，其中 $`C`$ 依赖于优势函数的最大绝对值和折扣因子。PPO-Clip 没有这样的全局保证，因为 clip 是对单个样本比率的逐点操作，不等价于对状态级 KL 散度的约束。但在实践中，这种启发式的悲观下界足够有效，且计算成本远低于 TRPO 的二阶优化。
 
-关于不对称性的直觉：当 $`A > 0`$ 且 $`r > 1+\varepsilon`$ 时，策略已经大幅增加了该好动作的概率，继续增加的边际收益递减而风险递增（可能导致其他好动作的概率被挤压），所以截断是合理的。但当 $`A > 0`$ 且 $`r < 1-\varepsilon`$ 时，策略反而降低了好动作的概率，这是一个明确的错误信号，不应该被截断——让梯度自由流动以尽快纠正。同理适用于 $`A < 0`$ 的对称情形。
+关于不对称性的直觉：当 $`A \gt  0`$ 且 $`r \gt  1+\varepsilon`$ 时，策略已经大幅增加了该好动作的概率，继续增加的边际收益递减而风险递增（可能导致其他好动作的概率被挤压），所以截断是合理的。但当 $`A \gt  0`$ 且 $`r \lt  1-\varepsilon`$ 时，策略反而降低了好动作的概率，这是一个明确的错误信号，不应该被截断——让梯度自由流动以尽快纠正。同理适用于 $`A \lt  0`$ 的对称情形。
 
 <a id="s6-2-4"></a>
 
@@ -2891,7 +2894,7 @@ PPO-Clip 最容易被误解的点在于其**不对称性**：它只阻止朝有�
 
 一个自然的疑问是：在 $`\theta = \theta_{\text{old}}`$ 处，$`L^{\text{CLIP}}`$ 的梯度是否等于标准策略梯度？答案是肯定的。
 
-当 $`\theta = \theta_{\text{old}}`$ 时，$`r_t(\theta) = 1`$，对所有 $`t`$ 成立。由于 $`1 \in [1-\varepsilon, 1+\varepsilon]`$（只要 $`\varepsilon > 0`$），clip 不生效，即 $`\text{clip}(1, 1-\varepsilon, 1+\varepsilon) = 1`$。此时两项相等：
+当 $`\theta = \theta_{\text{old}}`$ 时，$`r_t(\theta) = 1`$，对所有 $`t`$ 成立。由于 $`1 \in [1-\varepsilon, 1+\varepsilon]`$（只要 $`\varepsilon \gt  0`$），clip 不生效，即 $`\text{clip}(1, 1-\varepsilon, 1+\varepsilon) = 1`$。此时两项相等：
 
 ```math
 \min(1 \cdot \hat{A}_t, \; 1 \cdot \hat{A}_t) = \hat{A}_t
@@ -2919,7 +2922,7 @@ PPO 的另一种变体保留了完整的替代目标形式，但将信任域约�
 L^{\text{KLPEN}}(\theta) = \mathbb{E}_t \left[ r_t(\theta) \hat{A}_t \right] - \beta \cdot \mathbb{E}_t \left[ D_{\text{KL}}\big(\pi_{\theta_{\text{old}}}(\cdot|s_t) \;\|\; \pi_\theta(\cdot|s_t)\big) \right]
 ```
 
-其中 $`\beta > 0`$ 是 KL 惩罚系数，$`D_{\text{KL}}`$ 的定义见第 1 章。与 TRPO 的区别在于：TRPO 将 KL 作为硬约束（$`\leq \delta`$），而 PPO-Penalty 将其作为软惩罚项，并通过自适应机制调节 $`\beta`$。
+其中 $`\beta \gt  0`$ 是 KL 惩罚系数，$`D_{\text{KL}}`$ 的定义见第 1 章。与 TRPO 的区别在于：TRPO 将 KL 作为硬约束（$`\leq \delta`$），而 PPO-Penalty 将其作为软惩罚项，并通过自适应机制调节 $`\beta`$。
 
 <a id="s6-3-2"></a>
 
@@ -2968,7 +2971,7 @@ PPO 的实际优化目标不仅包含策略项，还包含价值函数拟合项�
 L_t^{\text{PPO}}(\theta, \phi) = L_t^{\text{CLIP}}(\theta) - c_1 \, L_t^{\text{VF}}(\phi) + c_2 \, S[\pi_\theta](s_t)
 ```
 
-其中 $`\phi`$ 是价值网络（critic）的参数，$`c_1, c_2 > 0`$ 是权重系数。下面逐项解释。
+其中 $`\phi`$ 是价值网络（critic）的参数，$`c_1, c_2 \gt  0`$ 是权重系数。下面逐项解释。
 
 **策略项 $`L_t^{\text{CLIP}}(\theta)`$**：即 6.2 节定义的裁剪替代目标。注意这里写的是**最大化**目标，而在实际训练中我们通常构造一个**最小化**的损失函数。因此策略项在 loss 中取负号：$`-L_t^{\text{CLIP}}(\theta)`$。
 
@@ -3086,7 +3089,7 @@ TRPO 的性能下界 $`J(\pi') \geq L_\pi(\pi') - C \cdot \max_s D_{\text{KL}}(\
 
 ### 6.6.2 梯度截断引入偏差
 
-当 $`r_t(\theta)`$ 被 clip 时（即 $`r_t < 1-\varepsilon`$ 或 $`r_t > 1+\varepsilon`$ 且对应情形下裁剪项被 $`\min`$ 选中），该项对 $`\theta`$ 的梯度为零。这意味着这部分样本的信息被完全丢弃了。从统计估计的角度看，这等价于对梯度估计施加了一个与数据相关的截断，引入了系统性偏差。在理论上，这个偏差的大小与 $`\varepsilon`$ 和策略更新步数 $`K`$ 有关：$`\varepsilon`$ 越小或 $`K`$ 越大，被截断的样本比例越高，偏差越大。但在实践中，适度的偏差换取了方差的显著降低，总体效果是正面的。
+当 $`r_t(\theta)`$ 被 clip 时（即 $`r_t \lt  1-\varepsilon`$ 或 $`r_t \gt  1+\varepsilon`$ 且对应情形下裁剪项被 $`\min`$ 选中），该项对 $`\theta`$ 的梯度为零。这意味着这部分样本的信息被完全丢弃了。从统计估计的角度看，这等价于对梯度估计施加了一个与数据相关的截断，引入了系统性偏差。在理论上，这个偏差的大小与 $`\varepsilon`$ 和策略更新步数 $`K`$ 有关：$`\varepsilon`$ 越小或 $`K`$ 越大，被截断的样本比例越高，偏差越大。但在实践中，适度的偏差换取了方差的显著降低，总体效果是正面的。
 
 <a id="s6-6-3"></a>
 
@@ -3142,7 +3145,7 @@ PPO 在 LLM 上是**逐 token** 应用的，而非逐句或逐段。对于生成
 r_t(\theta) = \frac{\pi_\theta(y_t | x, y_{<t})}{\pi_{\theta_{\text{old}}}(y_t | x, y_{<t})}
 ```
 
-其中 $`\pi_\theta(y_t | x, y_{<t})`$ 是语言模型在给定前缀条件下生成 token $`y_t`$ 的条件概率。优势 $`\hat{A}_t`$ 同样逐 token 计算，通常使用 GAE 或直接使用奖励模型的输出作为终端奖励进行反向传播。
+其中 $`\pi_\theta(y_t | x, y_{\lt t})`$ 是语言模型在给定前缀条件下生成 token $`y_t`$ 的条件概率。优势 $`\hat{A}_t`$ 同样逐 token 计算，通常使用 GAE 或直接使用奖励模型的输出作为终端奖励进行反向传播。
 
 <a id="s6-7-3"></a>
 
@@ -3215,13 +3218,13 @@ PPO 的定位可以概括为：**在理论保证与工程简洁性之间取得�
 
 ### 自测题
 
-**题目 1**：当 $`\hat{A}_t > 0`$ 且 $`r_t(\theta) > 1+\varepsilon`$ 时，$`L^{\text{CLIP}}`$ 中哪一项被 $`\min`$ 选中？该项对 $`\theta`$ 的梯度是多少？物理含义是什么？
+**题目 1**：当 $`\hat{A}_t \gt  0`$ 且 $`r_t(\theta) \gt  1+\varepsilon`$ 时，$`L^{\text{CLIP}}`$ 中哪一项被 $`\min`$ 选中？该项对 $`\theta`$ 的梯度是多少？物理含义是什么？
 
 参考答案：裁剪项 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)\hat{A}_t = (1+\varepsilon)\hat{A}_t`$ 被选中（因为它小于 $`r_t\hat{A}_t`$）。梯度为零，因为 $`1+\varepsilon`$ 是常数。物理含义是策略已经大幅增加了好动作的概率，clip 阻止继续增加以防止过度更新。
 
-**题目 2**：当 $`\hat{A}_t < 0`$ 且 $`r_t(\theta) < 1-\varepsilon`$ 时，$`\min`$ 选中的是哪一项？为什么这种情况下不阻止更新？
+**题目 2**：当 $`\hat{A}_t \lt  0`$ 且 $`r_t(\theta) \lt  1-\varepsilon`$ 时，$`\min`$ 选中的是哪一项？为什么这种情况下不阻止更新？
 
-参考答案：裁剪项 $`(1-\varepsilon)\hat{A}_t`$ 被选中（因为 $`A<0`$ 时 $`(1-\varepsilon)A < rA`$）。梯度为零。等等——重新审视：当 $`A<0`$ 且 $`r<1-\varepsilon`$ 时，$`rA > (1-\varepsilon)A`$（两个负数，$`r`$ 更小使 $`rA`$ 负得少即更大），所以 $`\min`$ 取 $`(1-\varepsilon)A`$，梯度确实为零。这实际上是阻止了"概率已经降得太低还要继续降"的过度更新。题目问"为什么不阻止"的前提有误——PPO 在这种情况下确实阻止了更新。正确理解是：PPO 阻止的是朝任一方向的过度更新，而非仅阻止有利方向。
+参考答案：裁剪项 $`(1-\varepsilon)\hat{A}_t`$ 被选中（因为 $`A\lt 0`$ 时 $`(1-\varepsilon)A \lt  rA`$）。梯度为零。等等——重新审视：当 $`A\lt 0`$ 且 $`r\lt 1-\varepsilon`$ 时，$`rA \gt  (1-\varepsilon)A`$（两个负数，$`r`$ 更小使 $`rA`$ 负得少即更大），所以 $`\min`$ 取 $`(1-\varepsilon)A`$，梯度确实为零。这实际上是阻止了"概率已经降得太低还要继续降"的过度更新。题目问"为什么不阻止"的前提有误——PPO 在这种情况下确实阻止了更新。正确理解是：PPO 阻止的是朝任一方向的过度更新，而非仅阻止有利方向。
 
 **题目 3**：证明在 $`\theta = \theta_{\text{old}}`$ 处，$`L^{\text{CLIP}}`$ 的梯度等于标准策略梯度 $`\mathbb{E}[\nabla_\theta \log \pi_\theta(a|s) \cdot \hat{A}]`$。
 
@@ -3729,7 +3732,7 @@ def get_lr(base_lr, current_step, total_steps):
 \|g\|_2 = \sqrt{\sum_i g_i^2}
 ```
 
-若 $`\|g\|_2 > \text{max\_grad\_norm}`$，则将所有梯度分量等比例缩放至 $`\text{max\_grad\_norm}`$。这与 PPO-Clip 中 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)`$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
+若 $`\|g\|_2 \gt  \text{max\_grad\_norm}`$，则将所有梯度分量等比例缩放至 $`\text{max\_grad\_norm}`$。这与 PPO-Clip 中 $`\text{clip}(r_t, 1-\varepsilon, 1+\varepsilon)`$ 的逐元素裁剪机制完全不同。前者是优化层面的稳定性手段（对应第 1 章），后者是算法层面的策略更新约束（对应第 6 章）。**这两个 "clip" 是 PPO 实现中最容易混淆的概念，务必区分。**
 
 <a id="s7-5"></a>
 
@@ -3782,7 +3785,7 @@ def get_lr(base_lr, current_step, total_steps):
 | explained_variance | $`1 - \frac{\text{Var}(R-V)}{\text{Var}(R)}`$，critic 拟合质量 | > 0.5 | < 0：critic 比常数预测还差，检查网络/lr/归一化 |
 | value_loss | $`\mathbb{E}[(V_\theta(s) - \hat{R})^2]`$ | 持续下降 | 不降或震荡：critic 容量不足、lr 不当 |
 | policy_loss | $`-\mathbb{E}[\min(r\hat{A}, \text{clip}(r)\hat{A})]`$ | 无固定范围 | 突增：结合 approx_kl 判断 |
-| grad_norm | $`\|\nabla L\|_2`$（裁剪前） | 平稳 | 突增：不稳定前兆，检查奖励尺度、观测归一化 |
+| grad_norm | $`\Vert \nabla L\Vert _2`$（裁剪前） | 平稳 | 突增：不稳定前兆，检查奖励尺度、观测归一化 |
 
 <a id="s7-6-2"></a>
 
